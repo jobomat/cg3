@@ -1,0 +1,113 @@
+{
+    "buttons": [
+        {
+            "sourceType": "python", 
+            "image": "hashRename.png", 
+            "label": "Hash Renamer", 
+            "command": "from cg3.util.names import HashRenamer\nHashRenamer()", 
+            "image1": "hashRename.png", 
+            "annotation": "Hash Renamer: Rename with auto numbering."
+        }, 
+        {
+            "sourceType": "python", 
+            "image": "addGroup.png", 
+            "label": "Add Group", 
+            "command": "import pymel.core as pc\nfrom cg3.util.hirarchies import add_group\nadd_group(pc.selected()[0])", 
+            "image1": "addGroup.png", 
+            "annotation": "Add group above selected object."
+        }, 
+        {
+            "type": "separator"
+        }, 
+        {
+            "sourceType": "mel", 
+            "image": "kinJoint.png", 
+            "label": "JointTool", 
+            "command": "JointTool", 
+            "image1": "kinJoint.png", 
+            "annotation": "JointTool", 
+            "doubleClickCommand": "JointToolOptions"
+        }, 
+        {
+            "sourceType": "python", 
+            "image": "splitJoint.png", 
+            "label": "Split Selected Joints", 
+            "command": "from cg3.rig.joints import SplitSelected\nSplitSelected()", 
+            "image1": "splitJoint.png", 
+            "annotation": "Split Selected\nJoints"
+        }, 
+        {
+            "type": "separator"
+        }, 
+        {
+            "sourceType": "mel", 
+            "image": "kinHandle.png", 
+            "label": "IKHandleTool", 
+            "command": "IKHandleTool", 
+            "image1": "kinHandle.png", 
+            "annotation": "IKHandleTool", 
+            "doubleClickCommand": "IKHandleToolOptions"
+        }, 
+        {
+            "sourceType": "python", 
+            "image": "stretchyIKSetup.png", 
+            "label": "Stretchy IK Setup", 
+            "command": "import cg3.rig.iks as iks\nsik = iks.StretchyIK()\nsik.gui()", 
+            "image1": "stretchyIKSetup.png", 
+            "annotation": "Create a Stretchy IK Setup from an existing IK."
+        }, 
+        {
+            "type": "separator"
+        }, 
+        {
+            "sourceType": "mel", 
+            "image": "ikSplineSolver.svg", 
+            "label": "IKSplineHandleTool", 
+            "command": "IKSplineHandleTool", 
+            "image1": "ikSplineSolver.svg", 
+            "annotation": "IKSplineHandleTool", 
+            "doubleClickCommand": "IKSplineHandleToolOptions"
+        }, 
+        {
+            "sourceType": "mel", 
+            "image": "stretchySplineSetup.png", 
+            "label": "Stretchy Spline IK", 
+            "command": "source js_createStretchSplineUI;\njs_createStretchSplineUI;", 
+            "image1": "stretchySplineSetup.png", 
+            "annotation": "Stretchy Spline IK Setup"
+        }, 
+        {
+            "type": "separator"
+        }, 
+        {
+            "sourceType": "python", 
+            "image": "rigIcons.png", 
+            "label": "Rig Icons", 
+            "command": "import cg3.rig.icons\ncg3.rig.icons.RigIcons().gui()", 
+            "image1": "rigIcons.png", 
+            "annotation": "Rig Icons"
+        }, 
+        {
+            "sourceType": "python", 
+            "image": "stickyControlerSetup.png", 
+            "label": "Sticky Controler", 
+            "command": "from cg3.rig.ctrl import StickyControllers\nStickyControllers()", 
+            "image1": "stickyControlerSetup.png", 
+            "annotation": "Sticky Controler Setup and Editing"
+        },
+        {
+            "type": "separator"
+        },
+        {
+            "sourceType": "python",
+            "image": "bgPlayblast.png",
+            "label": "Background Playblast",
+            "command": "from cg3.render.playblast import BackgroundPlayblast\nBackgroundPlayblast()",
+            "image1": "bgPlayblast.png",
+            "annotation": "Background Playblast. Render with Hardware or Arnold and encode with FFMPEG."
+        }
+    ], 
+    "name": "cg", 
+    "replace": true,
+    "position": 20
+}

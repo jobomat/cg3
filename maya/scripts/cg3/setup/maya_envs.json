@@ -1,0 +1,56 @@
+[
+    {
+        "name": "PYTHONPATH",
+        "recursive": false,
+        "replace": false,
+        "values": []
+    },
+    {
+        "name": "MAYA_SCRIPT_PATH",
+        "recursive": true,
+        "replace": false,
+        "values": [
+            "{base}/scripts/mel"
+        ]
+    },
+    {
+        "name": "MAYA_PLUG_IN_PATH",
+        "recursive": false,
+        "replace": false,
+        "values": [
+            "{base}/plugins/{VERSION_SHORT}/{OS}"
+        ]
+    },
+    {
+        "name": "XBMLANGPATH",
+        "recursive": true,
+        "replace": false,
+        "values": [
+            "{base}/icons"
+        ]
+    },
+    {
+        "name": "MAYA_FORCE_C_LOCALE",
+        "recursive": false,
+        "replace": true,
+        "values": [
+            "1"
+        ]
+    },
+    {
+        "name": "CG3_MAYA_DIR",
+        "recursive": false,
+        "replace": true,
+        "values": [
+            "{base}"
+        ]
+    },
+    {
+        "name": "CG3_ICONS_DIR",
+        "recursive": false,
+        "replace": true,
+        "values": [
+            "{base}/icons"
+        ]
+    }
+]
