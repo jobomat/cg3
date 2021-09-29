@@ -14,7 +14,9 @@ If you did not install PyMel with Maya 2022 please do the following:
 # 2 Download
 
 ## 2.1 Via Commandline / git bash
-git clone https://github.com/jobomat/cg3.git to the *desired location* on your computer.
++ Open git bash
++ cd into the *desired location* on your computer and run:
++ ```git clone https://github.com/jobomat/cg3.git```
 
 ## 2.2 Via Zip-File
 Click the green "Code" Button above and download the repo as zip file. Unpack to your *desired location*
