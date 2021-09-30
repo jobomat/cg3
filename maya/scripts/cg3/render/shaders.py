@@ -17,7 +17,7 @@ def get_staticUid_map(force_update=False):
     return suid_map
     
     
-def update_static_Uid_map():
+def update_staticUid_map():
     get_staticUid_map(True)
 
 
