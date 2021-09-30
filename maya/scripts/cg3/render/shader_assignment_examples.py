@@ -1,3 +1,8 @@
+"""
+Provide examples for usage of shaders module
+"""
+import json
+import pymel.core as pc
 import cg3.render.shaders as s3
 
 # call update every time the shaders changed (new shaders, shaders referenced...)
@@ -22,16 +27,12 @@ for obj in pc.selected():
 
 # collect shaderAssignments info. Interesting for potential GUI-Listings...
 shapes_with_assignment = {}
-shapes_without_assignment = {}
+
 for obj in pc.selected():
     shapes = obj.listRelatives(ad=True, type="shape")
     for shape in shapes:
         if shape.hasAttr("shaderAssignments"):
-            sgs = [sg.split(":") for sg in json.loads(
-                shape.shaderAssignments.get()).keys()]
-
-            shapes_with_assignment[shape.name()] = {
-                "shadingGroups": sgs
-            }
+            shapes_with_assignment[shape.name()] = json.loads(
+                shape.shaderAssignments.get())
 
 print(shapes_with_assignment)

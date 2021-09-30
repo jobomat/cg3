@@ -26,13 +26,13 @@ class File:
             if template_file.exists():
                 print(f"Using '{template_file}' as template file.")
                 if self.find_replace:
-                    with template_file.open() as tf:
-                        content = tf.read()
-                    for f, r in self.find_replace:
-                        content = content.replace(f, r)
-                        print(f"Replacing '{f}' with '{r}'")
-                    with filepath.open("w") as f:
-                        f.write(content)
+                    with template_file.open() as t_file:
+                        content = t_file.read()
+                    for find, repl in self.find_replace:
+                        content = content.replace(find, repl)
+                        print(f"Replacing '{find}' with '{repl}'")
+                    with filepath.open("w") as f_path:
+                        f_path.write(content)
                     print(f"Writing modified template to '{filepath}'.")
                     return
                 copyfile(str(template_file), str(filepath))
@@ -111,7 +111,7 @@ class Dir:
         try:
             return [f for f in self.files if f.name == name][0]
         except IndexError:
-            raise ValueError(f"File {name} not in {self.name}")
+            raise ValueError(f"File {name} not in {self.name}") from None
 
     def __getattribute__(self, attr):
         try:
@@ -123,7 +123,7 @@ class Dir:
             try:
                 return d[0]
             except IndexError:
-                raise ValueError(f"{name} contains no Dir named {attr}")
+                raise ValueError(f"{name} contains no Dir named {attr}") from None
 
 
 # d = Dir("bob")

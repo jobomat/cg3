@@ -27,14 +27,14 @@ class BackgroundPlayblast(SettingsManagerMixin):
         self.set_drawtext_menu_option(default_preset)
 
     def gui(self):
-        defaultResolution = pc.PyNode("defaultResolution")
-        defaultRenderGlobals = pc.PyNode("defaultRenderGlobals")
+        default_resolution = pc.PyNode("defaultResolution")
+        #default_render_globals = pc.PyNode("defaultRenderGlobals")
 
         padding = 5
 
         if pc.window(self.window_name, exists=True):
             pc.deleteUI(self.window_name)
-        with pc.window(self.window_name, title="Background Playblast") as win:
+        with pc.window(self.window_name, title="Background Playblast"):
             with pc.formLayout(numberOfDivisions=100) as main_fl:
                 with pc.columnLayout(adj=True, rs=padding) as self.main_cl:
                     self.scene_tfg = file_chooser_button(
@@ -82,8 +82,8 @@ class BackgroundPlayblast(SettingsManagerMixin):
                     pc.separator(h=2)
                     with pc.rowLayout(nc=8, adj=1):
                         with pc.optionMenuGrp(label="Renderer", cc=self.build_render_settings, cw=(1, 60), adj=2, cal=(1, "left")) as self.renderer_optionMenuGrp:
-                            for r in RENDERER_MAP.keys():
-                                pc.menuItem(r)
+                            for renderer in RENDERER_MAP:
+                                pc.menuItem(renderer)
                         pc.text(label="Start", w=35)
                         self.start_intField = pc.intField(
                             value=pc.playbackOptions(q=1, min=1), w=40
@@ -96,8 +96,8 @@ class BackgroundPlayblast(SettingsManagerMixin):
                         self.step_intField = pc.intField(value=1, w=20)
                         self.resolution_intFieldGrp = pc.intFieldGrp(
                             label="W | H", numberOfFields=2, cw3=(40, 50, 50),
-                            value1=defaultResolution.width.get(),
-                            value2=defaultResolution.height.get()
+                            value1=default_resolution.width.get(),
+                            value2=default_resolution.height.get()
                         )
                     with pc.frameLayout(label="Hardware 2.0 Render Settings") as self.renderer_fl:
                         self.build_hw2_rendersettings()
@@ -224,9 +224,9 @@ class BackgroundPlayblast(SettingsManagerMixin):
         ))
 
     def set_resolution_from_rendersettings(self):
-        defaultResolution = pc.PyNode("defaultResolution")
-        self.resolution_intFieldGrp.setValue1(defaultResolution.width.get())
-        self.resolution_intFieldGrp.setValue2(defaultResolution.height.get())
+        default_resolution = pc.PyNode("defaultResolution")
+        self.resolution_intFieldGrp.setValue1(default_resolution.width.get())
+        self.resolution_intFieldGrp.setValue2(default_resolution.height.get())
 
     def set_half_resolution(self):
         self.resolution_intFieldGrp.setValue1(
