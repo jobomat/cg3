@@ -1,3 +1,6 @@
+"""
+This module contains classes for creation of virtual directory structures.
+"""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from shutil import copyfile
@@ -58,8 +61,8 @@ class Dir:
 
     def add_new_dirs(self, dirs: List[str]) -> None:
         """Add multiple virtual subdirectories"""
-        for d in dirs:
-            self.add_new_dir(d)
+        for directory in dirs:
+            self.add_new_dir(directory)
 
     def add_new_file(self, name: str, template: str = "") -> None:
         """Add a virtual file."""
@@ -67,8 +70,8 @@ class Dir:
 
     def add_new_files(self, files: List[str]) -> None:
         """Add multiple virtual files."""
-        for f in files:
-            self.add_new_file(f)
+        for file in files:
+            self.add_new_file(file)
 
     def create(self, path: Path = Path.home(), template_dir: Path = None) -> None:
         """Create a real diretroy structure out of the virtual one.
@@ -81,21 +84,21 @@ class Dir:
         path = path / self.name
         path.mkdir()
         print(f"mkdir {path}")
-        for f in self.files:
-            f.create(path, template_dir)
-        for d in self.dirs:
-            d.create(path, template_dir)
+        for file in self.files:
+            file.create(path, template_dir)
+        for directory in self.dirs:
+            directory.create(path, template_dir)
 
     def read_from_path(self, path: Path) -> Dir:
         """Read an existing directory structure and
         create a virtual structure out of it. """
         self.name = path.name
-        for x in path.iterdir():
-            if x.is_dir():
-                d = Dir().read_from_path(x)
-                self.dirs.append(d)
-            elif x.is_file():
-                self.add_new_file(x.name)
+        for item in path.iterdir():
+            if item.is_dir():
+                directory = Dir().read_from_path(item)
+                self.dirs.append(directory)
+            elif item.is_file():
+                self.add_new_file(item.name)
         return self
 
     def as_dict(self) -> dict:
@@ -119,9 +122,9 @@ class Dir:
         except AttributeError:
             dirs = super().__getattribute__("dirs")
             name = super().__getattribute__("name")
-            d = [d for d in dirs if d.name == attr]
+            directory = [d for d in dirs if d.name == attr]
             try:
-                return d[0]
+                return directory[0]
             except IndexError:
                 raise ValueError(f"{name} contains no Dir named {attr}") from None
 
