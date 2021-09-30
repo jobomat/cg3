@@ -7,7 +7,7 @@ This Repo contains scripts related to HdM Übungen CG and Stupro CA.
 + PyMel
 
 If you did not install PyMel with Maya 2022 please do the following:
-+ Open a commandline (*cmd* for Windows, *terminal* for Mac, *shell* for Linux)
++ Open a commandline with administrator/root privileges (*cmd* for Windows, *terminal* for Mac, *shell* for Linux)
 + Cd into the Maya install location (eg. ```cd "C:\Program Files\Autodesk\maya2022\bin"``` for Windows). It has to be the directory where *mayapy* is located!
 + Use pip to install pymel: ```mayapy -m pip install pymel```
 
