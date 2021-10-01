@@ -105,9 +105,27 @@ class Dir:
         """Returns a dictionary of the virtual directory structure."""
         return {
             "name": self.name,
-            "files": [{"name": f.name, "template": f.template} for f in self.files],
+            "files": [
+                {
+                    "name": f.name,
+                    "template": f.template,
+                    "find_replace": f.find_replace
+                } for f in self.files
+            ],
             "dirs": [d.as_dict() for d in self.dirs]
         }
+
+    def from_dict(self, dir_dict: dict) -> Dir:
+        """"Create a virtual Dir structure from dictionary."""
+        self.name = self.name or dir_dict["name"]
+        self.files = [
+            File(name=f.name, template=f.template, find_replace=f.find_replace)
+            for f in dir_dict["files"]    
+        ]
+        self.dirs = [
+            Dir().from_dict(d) for d in dir_dict["dirs"]
+        ]
+        return self
 
     def get_file(self, name: str) -> File:
         """Get the virtual file object called 'name' in the current Dir object."""
@@ -127,6 +145,7 @@ class Dir:
                 return directory[0]
             except IndexError:
                 raise ValueError(f"{name} contains no Dir named {attr}") from None
+
 
 
 # d = Dir("bob")
