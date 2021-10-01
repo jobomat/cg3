@@ -1,5 +1,5 @@
 This Repo contains scripts related to HdM Übungen CG and Stupro CA.
-In the rooms 042 / 043 you have access to the latest version on drive K:\pipeline\cg3 (cg). Just use the drop-installer mentioned in 3.1 to set it up for your HdM Account. 
+In the rooms 042 / 043 you have access to the latest version on drive K:\pipeline\cg3 (\\cg\pipeline\cg3). Just use the drop-installer located there to set up cg3 for your HdM account (See 3.1 further down). 
 
 # 1 Requirements
 + Maya 2022+ (cg3 uses the featureset of Python 3.7.7)
