@@ -8,7 +8,7 @@ In the rooms 042 / 043 you have access to the latest version on drive K:\pipelin
 If you did not install PyMel with Maya 2022 please do the following:
 + Open a commandline with administrator/root privileges (*cmd* for Windows, *terminal* for Mac, *shell* for Linux)
 + Cd into the Maya install location (eg. ```cd "C:\Program Files\Autodesk\maya2022\bin"``` for Windows). It has to be the directory where *mayapy* is located!
-+ Use pip to install pymel: ```mayapy -m pip install pymel```
++ Use pip with mayapy to install pymel: ```mayapy -m pip install pymel```
 
 # 2 Download
 
