@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 @dataclass
-class File:
-    """Class of a virtual file to use with virtual directories (class Dir)."""
+class DirtreeFile:
+    """Class of a virtual file to use with virtual directories (class Dirtree)."""
     name: str
     template: str = ""
     find_replace: List[Tuple[str]] = field(default_factory=list)
@@ -49,15 +49,15 @@ class File:
 
 
 @dataclass
-class Dir:
+class Dirtree:
     """Class for building virtual directory trees."""
     name: str = ""
-    dirs: List[Dir] = field(default_factory=list)
-    files: List[File] = field(default_factory=list)
+    dirs: List[Dirtree] = field(default_factory=list)
+    files: List[DirtreeFile] = field(default_factory=list)
 
     def add_new_dir(self, name: str) -> None:
         """Add a virtual subdirectory."""
-        self.dirs.append(Dir(name))
+        self.dirs.append(Dirtree(name))
 
     def add_new_dirs(self, dirs: List[str]) -> None:
         """Add multiple virtual subdirectories"""
@@ -66,7 +66,7 @@ class Dir:
 
     def add_new_file(self, name: str, template: str = "") -> None:
         """Add a virtual file."""
-        self.files.append(File(name, template))
+        self.files.append(DirtreeFile(name, template))
 
     def add_new_files(self, files: List[str]) -> None:
         """Add multiple virtual files."""
@@ -89,13 +89,13 @@ class Dir:
         for directory in self.dirs:
             directory.create(path, template_dir)
 
-    def read_from_path(self, path: Path) -> Dir:
+    def read_from_path(self, path: Path) -> Dirtree:
         """Read an existing directory structure and
         create a virtual structure out of it. """
         self.name = path.name
         for item in path.iterdir():
             if item.is_dir():
-                directory = Dir().read_from_path(item)
+                directory = Dirtree().read_from_path(item)
                 self.dirs.append(directory)
             elif item.is_file():
                 self.add_new_file(item.name)
@@ -115,24 +115,32 @@ class Dir:
             "dirs": [d.as_dict() for d in self.dirs]
         }
 
-    def from_dict(self, dir_dict: dict) -> Dir:
-        """"Create a virtual Dir structure from dictionary."""
+    def from_dict(self, dir_dict: dict) -> Dirtree:
+        """"Create a virtual Dirtree structure from dictionary."""
         self.name = self.name or dir_dict["name"]
         self.files = [
-            File(name=f.name, template=f.template, find_replace=f.find_replace)
+            DirtreeFile(name=f["name"], template=f["template"], find_replace=f["find_replace"])
             for f in dir_dict["files"]    
         ]
         self.dirs = [
-            Dir().from_dict(d) for d in dir_dict["dirs"]
+            Dirtree().from_dict(d) for d in dir_dict["dirs"]
         ]
         return self
 
-    def get_file(self, name: str) -> File:
+    def get_file(self, name: str) -> DirtreeFile:
         """Get the virtual file object called 'name' in the current Dir object."""
         try:
             return [f for f in self.files if f.name == name][0]
         except IndexError:
             raise ValueError(f"File {name} not in {self.name}") from None
+
+    def get_dir(self, name: str) -> Dirtree:
+        """Get the virtual dirtree object called 'name' in the current Dir object."""
+        directory = [d for d in self.dirs if d.name == name]
+        try:
+            return directory[0]
+        except IndexError:
+            raise ValueError(f"{self.name} contains no Dirtree named {name}") from None
 
     def __getattribute__(self, attr):
         try:
@@ -144,11 +152,14 @@ class Dir:
             try:
                 return directory[0]
             except IndexError:
-                raise ValueError(f"{name} contains no Dir named {attr}") from None
+                raise ValueError(f"{name} contains no Dirtree named {attr}") from None
+
+    def __str__(self, level=0):
+        "{self.name}:"
 
 
 
-# d = Dir("bob")
+# d = Dirtree("bob")
 # d.add_new_dirs(["versions", "release_history"])
 # d.versions.add_new_dirs(["mod", "rig", "shade", "anim", "render"])
 # d.versions.mod.add_new_files(["test.ma", "test2.txt"])
