@@ -53,6 +53,10 @@ def get_user_settings() -> Settings:
     USER_SETTINGS = f"{MAYA_APP_DIR}/{MAYA_VERSION}/scripts/cg3.json"
     return Settings(USER_SETTINGS)
 
+def get_project_settings() -> Settings:
+    user_settings = get_user_settings()
+    return Settings(user_settings.project_settings)
+
 
 class ClassUserSettings(Settings):
     """Class for managing settings for classes."""

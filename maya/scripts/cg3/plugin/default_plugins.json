@@ -1,0 +1,12 @@
+{
+    "demo": {
+        "listen_to": {
+            "asset_open_clicked": "gui"
+        }
+    },
+    "demo2": {
+        "listen_to": {
+            "asset_open_clicked": "print_something"
+        }
+    }
+}

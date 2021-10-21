@@ -49,6 +49,13 @@ def file_chooser_button(label, fileMode, bl="...", text="",
     return btn
 
 
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.HLine)
+        self.setFrameShadow(QFrame.Sunken)
+
+
 class OutputConsole(QTextEdit):
     """Colored text output console.
     Example

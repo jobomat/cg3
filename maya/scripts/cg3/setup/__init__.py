@@ -10,6 +10,8 @@ from cg3.env.vars import set_env_vars
 executeDeferred("import cg3.setup.add_venvs")
 executeDeferred("import cg3.setup.add_toolbox_buttons")
 executeDeferred("import cg3.setup.add_shelfes")
+executeDeferred("from cg3.plugin.models import Plugins; cg3plugins = Plugins()")
+
 
 this_file_path = inspect.getfile(lambda: None).replace("\\", "/")
 
