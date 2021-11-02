@@ -12,7 +12,7 @@
             "sourceType": "python", 
             "image": "addGroup.png", 
             "label": "Add Group", 
-            "command": "import pymel.core as pc\nfrom cg3.util.hirarchies import add_group\nadd_group(pc.selected()[0])", 
+            "command": "import pymel.core as pc\nfrom cg3.util.hirarchies import add_group\nsel=pc.selected()\nif sel:\n\tadd_group(sel[0])", 
             "image1": "addGroup.png", 
             "annotation": "Add group above selected object."
         }, 
@@ -69,12 +69,12 @@
             "doubleClickCommand": "IKSplineHandleToolOptions"
         }, 
         {
-            "sourceType": "mel", 
-            "image": "stretchySplineSetup.png", 
-            "label": "Stretchy Spline IK", 
-            "command": "source js_createStretchSplineUI;\njs_createStretchSplineUI;", 
-            "image1": "stretchySplineSetup.png", 
-            "annotation": "Stretchy Spline IK Setup"
+            "sourceType": "python", 
+            "image": "stretchySplineSetup2.png", 
+            "label": "Stretchy Spline IK Manager", 
+            "command": "from cg3.rig.splineiks import SplineIKManager\nSplineIKManager()", 
+            "image1": "stretchySplineSetup2.png", 
+            "annotation": "Create and manage Stretchy Spline IK Rigs."
         }, 
         {
             "type": "separator"
@@ -83,7 +83,7 @@
             "sourceType": "python", 
             "image": "rigIcons.png", 
             "label": "Rig Icons", 
-            "command": "import cg3.rig.icons\ncg3.rig.icons.RigIcons().gui()", 
+            "command": "from cg3.rig.icons import RigIcons\nRigIcons().gui()", 
             "image1": "rigIcons.png", 
             "annotation": "Rig Icons"
         }, 

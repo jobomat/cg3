@@ -2,6 +2,15 @@
 import pymel.core as pc
 
 
+def get_curve_length(curve: pc.nodetypes.NurbsCurve) -> float:
+    """Returns the length of given curve."""
+    crv_info = pc.createNode("curveInfo")
+    curve.worldSpace >> crv_info.inputCurve
+    crv_len = crv_info.arcLength.get()
+    pc.delete(crv_info)
+    return crv_len
+
+
 def combine_shapes(transforms, delete=True):
     """
     Takes a list of pymel.nt.Transform nodes. Returns the "combined" transform.

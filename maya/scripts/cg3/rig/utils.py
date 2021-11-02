@@ -160,7 +160,7 @@ def insert_normalized_scale_node(unnormalized_attr, scalefactor_attr, normalize_
     dest_attrs = unnormalized_attr.listConnections(plugs=True)
 
     normalize_node_channels = get_free_md_channels(
-        node=normalize_node, name="{}_normalize_div".format(name)
+        node=normalize_node, name=f"{name}_normalize_div"
     )
 
     normalize_node = normalize_node_channels[0].node()
@@ -219,6 +219,37 @@ def scalefactor_node(m1, m2, div_node=None, initial_len=None, name=None):
     div_node_channels[1].set(initial_len)
 
     return div_node, div_node_channels[2]
+
+
+def point_on_curve_info_nodes(curve: pc.nodetypes.NurbsCurve, num_points: int, name: str=None) -> list:
+    name = name or curve.name()
+    u_step = 1.0 / (num_points - 1)
+    u_values = [x * u_step for x in range(num_points)]
+    info_nodes = []
+    for i, u_value in enumerate(u_values):
+        info_node = pc.createNode("pointOnCurveInfo")
+        info_node.turnOnPercentage.set(1)
+        info_node.parameter.set(u_value)
+        info_node.rename(f"{name}_poc")
+        curve.attr("worldSpace[0]") >> info_node.inputCurve
+        info_nodes.append(info_node)
+    return info_nodes
+    
+
+def distance_points_between_to_curves(curve1: pc.nodetypes.NurbsCurve, curve2: pc.nodetypes.NurbsCurve, num_points: int, name: str=None) -> list:
+    name = name or f"{curve1.name()}_{curve2.name()}"
+    info_nodes_1 = point_on_curve_info_nodes(curve1, num_points, f"{curve1.name()}_info")
+    info_nodes_2 = point_on_curve_info_nodes(curve2, num_points, f"{curve2.name()}_info")
+    dist_nodes = []
+    i = 1
+    for info_1, info_2 in zip(info_nodes_1, info_nodes_2):
+        dist_node = pc.createNode("distanceBetween")
+        dist_node.rename(f"{name}_{i}_dist")
+        info_1.position >> dist_node.point1
+        info_2.position >> dist_node.point2
+        dist_nodes.append(dist_node)
+        i += 1
+    return dist_nodes
 
 
 def attach_group_to_edge(edge, name="test", grp_count=1, ctrl=True):

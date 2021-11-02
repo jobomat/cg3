@@ -1,8 +1,31 @@
 """Module providing functions to generate and edit Maya ik setups.
 """
+from typing import Any, List, Tuple
 import pymel.core as pc
-from cg3.rig.utils import scalefactor_node, hierarchy_len, locator_at_point, insert_normalized_scale_node
+from cg3.geo.transforms import place_along_curve
+from cg3.rig.utils import (
+    scalefactor_node, hierarchy_len,
+    locator_at_point, insert_normalized_scale_node
+)
+from cg3.rig.joints import single_joint_ctrl
 from cg3.util.hirarchies import add_group
+
+
+def get_solver_type(node: Any) -> str:
+    """
+    Returns a string representing the Solvertype of the given node
+    or None if the given node isn't an IkHandle.
+    """
+    if not isinstance(node, pc.nodetypes.IkHandle):
+        return None
+    ik_handle_attr = [a for a in pc.selected()[0].listAttr() if "solver" in a.name().lower()][0]
+    ik_solver = ik_handle_attr.listConnections()[0]
+    return ik_solver.type()
+
+
+def is_spline_ik_handle(node):
+    """Returns if the given node is an ikSplineSolver-Handle."""
+    return get_solver_type(node) == "ikSplineSolver"
 
 
 def ik_stretch(ik_handle, pole=None, lock=False, max_stretch=5, name=None, parent_measure_loc=True):
@@ -86,14 +109,18 @@ def ik_stretch(ik_handle, pole=None, lock=False, max_stretch=5, name=None, paren
     return (div_node, clamp_node, ik_grp)
 
 
-def apply_curve_based_scale(ik_handle, name=None):
+def create_curve_based_scale_setup(ik_handle: pc.nodetypes.IkHandle, name: str=None):
+    """
+    Sets up the x-scaling of joints that are members of 'ik_handle'
+    based on the ration of current curve length to original curve length. 
+    """
     joints = ik_handle.getJointList()
     if name is None:
-    	name = joints[0].name()
+        name = joints[0].name()
     ik_curve = pc.PyNode(ik_handle.getCurve())
 
-    crv_info = pc.createNode("curveInfo", name="{}_ik_crvinfo".format(name))
-    div_node = pc.createNode("multiplyDivide", name="{}_ik_div".format(name))
+    crv_info = pc.createNode("curveInfo", name=f"{name}_ik_crvinfo")
+    div_node = pc.createNode("multiplyDivide", name=f"{name}_ik_div")
     div_node.setAttr("operation", 2)
     ik_curve.worldSpace >> crv_info.inputCurve
     crv_info.arcLength >> div_node.input1X
@@ -102,17 +129,74 @@ def apply_curve_based_scale(ik_handle, name=None):
     for joint in joints:
         div_node.outputX >> joint.scaleX
 
-    return joints, ik_curve, crv_info, div_node
+    return crv_info, div_node.attr("outputX")
 
 
-def stretchy_spline_ik(name=None, curve_spans=4):
+def create_spline_ik(start_joint: pc.nodetypes.Joint,
+                     end_joint: pc.nodetypes.Joint,
+                     name: str=None, curve_spans: int=4) -> Tuple[pc.nodetypes.IkHandle, pc.nodetypes.NurbsCurve, str]:
+    """Mini wrapper around splineIk creation. Enables more than 4 spans."""
+    name = name or "".join(start_joint.name[:-1])
     ik_handle, ik_effector, ik_curve = pc.ikHandle(
         n="{}_spline_ik".format(name),
         sol="ikSplineSolver", pcv=False, ns=curve_spans
     )
     ik_curve.rename("{}_ik_crv".format(name))
     ik_effector.rename("{}_spline_effector".format(name))
-    apply_curve_based_scale(ik_handle, name)
+    ik_handle.visibility.set(False)
+    ik_handle.addAttr("scale_power", k=True)
+    ik_curve.visibility.set(False)
+    return ik_handle, ik_curve, name
+
+
+def setup_advanced_twist_control(ik_handle:pc.nodetypes.IkHandle,
+                                 start_up_obj: pc.nodetypes.Transform,
+                                 end_up_obj: pc.nodetypes.Transform):
+    ik_handle.dTwistControlEnable.set(True)
+    ik_handle.dWorldUpType.set(4)  # Type: Object rotation up (start/end)
+    ik_handle.dWorldUpAxis.set(0)  # Up Axis: Positive Y
+    ik_handle.dWorldUpVectorX.set(0)
+    ik_handle.dWorldUpVectorY.set(1)
+    ik_handle.dWorldUpVectorZ.set(0)
+    ik_handle.dWorldUpVectorEndX.set(0)
+    ik_handle.dWorldUpVectorEndY.set(1)
+    ik_handle.dWorldUpVectorEndZ.set(0)
+
+    start_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrix
+    end_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrixEnd
+
+def setup_squash_stretch(ik_handle:pc.nodetypes.IkHandle, scale_factor_attr: pc.Attribute, name: str):
+    """
+    Creates an expression and frameCache based setup for preserving the volume
+    when a stretchy splineIK is squashed/stretched.
+    """
+    joint_list = ik_handle.getJointList()
+    if not ik_handle.hasAttr("scale_power"):
+        ik_handle.addAttr("scale_power", at="float")
+    scale_power_attr = ik_handle.attr("scale_power")
+    scale_power_attr.setKey(t=1, v=0)
+    scale_power_attr.setKey(t=len(joint_list), v=0)
+    anim_curve_node = scale_power_attr.listConnections()[0]
+    anim_curve_node.setWeighted(True)
+    pc.keyTangent(anim_curve_node, e=True, absolute=True, t=1, outAngle=50)
+    pc.keyTangent(anim_curve_node, e=True, absolute=True, t=len(joint_list), inAngle=-50)
+
+    frame_caches = []
+    expression = [
+        f"$scale = {scale_factor_attr.name()};",
+        f"$sqrt = 1 / sqrt($scale);"
+    ]
+    for i, joint in enumerate(joint_list, 1):
+        frame_cache = pc.createNode("frameCache", n=f"{name}_{joint.name()}_fc")
+        frame_cache.varyTime.set(i)
+        scale_power_attr >> frame_cache.stream
+        expression.append(f"{joint.name()}.sy = pow($sqrt, {frame_cache.name()}.varying);")
+        expression.append(f"{joint.name()}.sz = pow($sqrt, {frame_cache.name()}.varying);")
+        frame_caches.append(frame_cache)
+        
+    expression = "\n".join(expression)
+    expression_node = pc.expression(s=expression, n=f"{name}_expr")
+    return expression_node, frame_caches
 
 
 class StretchyIK():

@@ -19,6 +19,28 @@ def legalize_text(text, allow=""):
     return "".join([get_legal_character(c, allow) for c in text])
 
 
+def name_with_numbered_postfix(name: str, postfix: str, zerofill: int = 2) -> str:
+    """"
+    Adds the specified postfix to 'name'.
+    If 'name' already ends with a number, the number will be incremented.
+    The number will be filled with leading zeros to the length of zerofill.
+    If no leading zeros should be applied set zerofill to a falsy value.
+    """
+    pattern = f".*{postfix}(?P<num>\d*)$"
+    match = re.match(pattern, name)
+    if match:
+        name = name[:-(len(postfix))]
+        if match.groupdict()["num"]:
+            num = str(int(match.groupdict()["num"]) + 1)
+            num_len = len(match.groupdict()["num"])
+            name = name[:-num_len]
+            zerofill = zerofill or num_len
+            postfix = f"{postfix}{num.zfill(num_len)}"
+        else:
+            postfix = f"{postfix}{'2'.zfill(zerofill)}"
+    return f"{name}{postfix}"
+
+
 def hash_iterator(name_pattern, start=1, step=1, hashlen=3):
     parts = re.split("#+", name_pattern)
     if len(parts) > 1:

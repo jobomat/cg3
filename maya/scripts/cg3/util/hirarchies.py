@@ -1,5 +1,6 @@
 # encoding: utf-8
 import pymel.core as pc
+from cg3.util.names import name_with_numbered_postfix
 
 
 def list_all_parents(transform):
@@ -46,10 +47,12 @@ def connect_hirarchy(driver, driven,
         connect_hirarchy(m, s, connect_function, condition_function)
 
 
-def add_group(transform, name=None):
-    name = name or transform.name()
+def add_group(transform: pc.nodetypes.Transform, name: str=None):
+    if name is None:
+        name = transform.name()
+    name = name_with_numbered_postfix(name, "_grp")
     transform_parent = transform.getParent()
-    grp = pc.group(empty=True, name="{}_grp".format(name))
+    grp = pc.group(empty=True, name=name)
     cnstr = pc.parentConstraint(transform, grp)
     pc.delete(cnstr)
     if transform_parent:

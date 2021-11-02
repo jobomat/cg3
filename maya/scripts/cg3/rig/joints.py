@@ -1,5 +1,34 @@
-# coding: utf8
+from typing import List
+
 import pymel.core as pc
+
+from cg3.util.hirarchies import add_group
+from cg3.geo.transforms import place_along_curve
+
+
+def single_joint_ctrl(name: str, postfix: str="_bnd") -> pc.nodetypes.Joint:
+    """Creates a single joint as children of a NurbsCircle and two groups."""
+    jnt = pc.joint(name=f"{name}{postfix}", p=(0, 0, 0))
+    jnt.visibility.set(False)
+    ctrl = pc.circle(ch=False, normal=(1, 0, 0), name=f"{name}_ctrl")[0]
+    ctrl_null = add_group(add_group(ctrl, f"{name}_offset"), f"{name}_null")
+    pc.parent(jnt, ctrl)
+    return jnt
+
+
+def create_joint_controls_along_curve(curve: pc.nodetypes.NurbsCurve,
+                                      up_object: pc.nodetypes.Transform,
+                                      num_controls: int, name:str=None) -> List[pc.nodetypes.Joint]:
+    """
+    Creates 'num_controls' controls placed evenly spaced at and oriented along 'curve'. 
+    The control contains a single joint and is wrapped in two offset groups.
+    """
+    name = name or "_".join(curve.name().split("_")[:-1])
+    jnt_list = [single_joint_ctrl(f"{name}_{i+1}") for i in range(num_controls)]
+    null_list = [j.getParent().getParent().getParent() for j in jnt_list]
+    # Place the joints equidistributed along the curve:
+    place_along_curve(null_list, curve, up_object=up_object)
+    return jnt_list
 
 
 def split(joint, num_segments=2):
