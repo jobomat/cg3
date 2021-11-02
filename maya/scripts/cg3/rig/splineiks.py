@@ -195,11 +195,12 @@ class SplineIKRig:
         for ctrl in self.controls:
             offset_grp = ctrl.getParent()
             null_grp = None if not offset_grp else offset_grp.getParent()
-            pc.delete(ctrl)
+            if ctrl.exists():
+                pc.delete(ctrl)
             if delete_parents:
-                if offset_grp and offset_grp.name().endswith("_offset_grp"):
+                if offset_grp and offset_grp.exists() and offset_grp.name().endswith("_offset_grp"):
                     pc.delete(offset_grp)
-                if null_grp and null_grp.name().endswith("_null_grp"):
+                if null_grp and null_grp.exists() and null_grp.name().endswith("_null_grp"):
                     pc.delete(null_grp)
     
     def bind_curve(self):
