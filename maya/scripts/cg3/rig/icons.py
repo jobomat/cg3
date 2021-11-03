@@ -135,7 +135,7 @@ class RigIcons():
 
                 pc.separator(h=10)
 
-                with pc.rowLayout(numberOfColumns=7):
+                with pc.rowLayout(numberOfColumns=7, adj=7):
                     pc.text(label=" Rotate by ")
                     self.rotation_angle = pc.intField(
                         w=25, h=20, minValue=-180, maxValue=180, value=90
@@ -153,24 +153,9 @@ class RigIcons():
                         w=20, h=20, label="z",
                         c=pc.Callback(self.rotate_shape, [0, 0, 1])
                     )
-                    with pc.rowLayout(nc=3, cw3=[35, 30, 90]):
-                        pc.text(label=" Scale")
-                        self.scale_floatField = pc.floatField(
-                            minValue=0.01, maxValue=5.0, value=1.0, precision=2
-                        )
-                        self.scale_floatSlider = pc.floatSlider(
-                            minValue=0.01, maxValue=5.0, value=1.0
-                        )
-
-                    self.scale_floatField.changeCommand(
-                        pc.Callback(self.scale_shape, self.scale_floatField, True)
-                    )
-                    self.scale_floatSlider.dragCommand(
-                        pc.Callback(self.scale_shape, self.scale_floatSlider, False)
-                    )
-                    self.scale_floatSlider.changeCommand(
-                        pc.Callback(self.post_scale_shape, self.scale_floatSlider)
-                    )
+                    with pc.rowLayout(nc=2, cw2=[1,90], adj=1):
+                        pc.text(label=" ")
+                        pc.button(label="Enable Centered Scale", c=self.enable_centered_scale)
 
                 pc.separator(h=10)
 
@@ -381,15 +366,14 @@ class RigIcons():
             for child in children:
                 rotate_shapes(child, [a * angle for a in axes], pivot)
 
-    def scale_shape(self, source_ui, execute_post_scale):
-        v = source_ui.getValue()
-        pc.scale(v, v, v)
-        if execute_post_scale:
-            self.post_scale_shape(source_ui)
+    def enable_centered_scale(self, *args):
+        curves = [c.getShape() for c in pc.selected() if type(c.getShape()) == pc.nodetypes.NurbsCurve]
+        pc.select(cl=True)
+        for crv in curves:
+            pc.select(crv.cv, add=True)
 
-    def post_scale_shape(self, source_ui):
-        pc.makeIdentity(apply=True, t=0, r=0, s=1, n=0)
-        source_ui.setValue(1.0)
+        pc.mel.eval("setToolTo $gScale;")
+        pc.manipScaleContext("Scale", e=True, useObjectPivot=True, useManipPivot=False)
 
     def check_text_field_input(self, *args):
         t = self.name_textFieldGrp.getText()
@@ -436,3 +420,27 @@ class RigIcons():
 
     def list(self):
         print("\n".join("{}: {}".format(i, icon["name"]) for i, icon in enumerate(this.icons)))
+
+
+# # Following example shows easy way to save only createNode excerpts
+# # from exported NurbsCurve(s) / Polys. Export them as .ma
+# # and process them like so:
+
+# from pathlib import Path
+# file = Path(r"C:\Users\jobo\Desktop\hand.ma")
+
+# ma_curves_excerpt =[]
+# with file.open("r") as f:
+#     lines = f.readlines()
+    
+# create_node_detected = False
+# for line in lines:
+#     if line.startswith("createNode"):
+#         create_node_detected = True
+#         ma_curves_excerpt.append(line)
+#     elif line.startswith("\t") and create_node_detected:
+#         ma_curves_excerpt.append(line)
+#     else:
+#         create_node_detected = False
+            
+# print("".join(ma_curves_excerpt))
