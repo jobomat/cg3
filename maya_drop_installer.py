@@ -25,6 +25,9 @@ def sanity_checks():
     return True
 
 def create_cg3_settings_dir():
+    if (USER_SCRIPT_DIR / CG3_SETTINGS_DIR).exists():
+        msg_q.append(("info.png", f"Directory '{CG3_SETTINGS_DIR}' already exists in {USER_SCRIPT_DIR}."))
+        return
     (USER_SCRIPT_DIR / CG3_SETTINGS_DIR).mkdir()
     msg_q.append(("confirm.png", f"Directory '{CG3_SETTINGS_DIR}' created in {USER_SCRIPT_DIR}"))
 

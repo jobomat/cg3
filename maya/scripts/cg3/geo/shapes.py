@@ -15,6 +15,12 @@ def delete_unused_shapes(transform):
     pc.delete(get_unused_shapes(transform))
 
 
+def add_shapes(from_obj: pc.nodetypes.Transform, to_obj: pc.nodetypes.Transform):
+    """Adds shapes found in from_obj to to_obj."""
+    for shape in from_obj.getShapes():
+        pc.parent(shape, to_obj, shape=True, add=True)
+
+
 def randomize_components(components, mini=(-0.1, -0.1, -0.1), maxi=(0.1, 0.1, 0.1), space="object"):
     for comp in components:
         new_pos = [

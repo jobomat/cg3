@@ -14,6 +14,15 @@ from cg3.rig.ctrl import slider_control, four_corner_control
 from cg3.geo.polys import poly_text, set_vertex_wire_color
 
 
+def import_blendshaped_ik_fk(name="ik_fk"):
+    p = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
+    pc.mel.eval(f'file -import -type "mayaAscii"  -ignoreVersion -mergeNamespacesOnClash false -rpr "ik_fk_icon" -options "v=0;"  -pr  -importFrameRate true  -importTimeRange "override" "{p}/RigIcons/ik_fk_blenshape_icon.ma";')
+    ctrl = pc.PyNode("ik_fk_offset_grp|ik_fk_ctrl")
+    ctrl.rename(f"{name}_ikfk_ctrl")
+    offset = pc.PyNode("ik_fk_offset_grp")
+    offset.rename(f"{name}_ikfk_offset_grp")
+    return ctrl
+
 this = sys.modules[__name__]
 this.icons = None
 
@@ -105,6 +114,7 @@ class RigIcons():
                 pc.menuItem(label='Save Config', c=self.save_config)
 
             with pc.menu(label="Specials", tearOff=True):
+                pc.menuItem(label='IK FK BlendShaped Icon', c=pc.Callback(self.create_ik_fk_blendshaped_icon))
                 pc.menuItem(label='Slider from 0 to 1', c=pc.Callback(self.create_slider, False))
                 pc.menuItem(label='Slider from -1 to 1', c=pc.Callback(self.create_slider, True))
                 pc.menuItem(label='Four Corner Control', c=self.create_four_corner_control)
@@ -418,6 +428,9 @@ class RigIcons():
                 obj.attr(channel).setKeyable(not obj.attr(channel).isKeyable())
                 obj.attr(channel).setLocked(not obj.attr(channel).isLocked())
 
+    def create_ik_fk_blendshaped_icon(self):
+        import_blendshaped_ik_fk()
+
     def list(self):
         print("\n".join("{}: {}".format(i, icon["name"]) for i, icon in enumerate(this.icons)))
 
@@ -427,10 +440,24 @@ class RigIcons():
 # # and process them like so:
 
 # from pathlib import Path
-# file = Path(r"C:\Users\jobo\Desktop\hand.ma")
+
+# def filter_line(line):
+#     if line.lstrip().startswith("rename -uid "):
+#         return ""
+#     if line.lstrip().startswith('setAttr ".ov'):
+#         return ""
+#     if line.startswith("\t"):
+#         return line
+
+
+# path = r"C:/Users/jobo/Desktop/"
+# name = "test"
+
+# ma_file = Path(path) / f"{name}.ma"
+# pc.system.exportSelected(str(ma_file), force=True, type="mayaAscii")
 
 # ma_curves_excerpt =[]
-# with file.open("r") as f:
+# with ma_file.open("r") as f:
 #     lines = f.readlines()
     
 # create_node_detected = False
@@ -438,9 +465,16 @@ class RigIcons():
 #     if line.startswith("createNode"):
 #         create_node_detected = True
 #         ma_curves_excerpt.append(line)
-#     elif line.startswith("\t") and create_node_detected:
-#         ma_curves_excerpt.append(line)
+#     elif create_node_detected and line.startswith("\t"):
+#         ma_curves_excerpt.append(filter_line(line))
 #     else:
 #         create_node_detected = False
-            
-# print("".join(ma_curves_excerpt))
+
+# file = Path(r"C:\Users\jobo\Desktop") / f"{name}.ri"            
+# with file.open("w") as f:
+#     f.write("".join(ma_curves_excerpt))
+
+
+# # load again:
+# with file.open("r") as f:
+#     pc.mel.eval(f.read())

@@ -252,6 +252,23 @@ def distance_points_between_to_curves(curve1: pc.nodetypes.NurbsCurve, curve2: p
     return dist_nodes
 
 
+def create_pairblend(
+    in_obj_1: pc.nodetypes.Transform,
+    in_obj_2: pc.nodetypes.Transform,
+    result_obj: pc.nodetypes.Transform,
+    name: str=None, channels=["translate", "rotate"]):
+    """creates ab pairblend from in_obj_1.channel and in_obj2.channel to result_obj.channel"""
+    pairblend = pc.createNode(
+        "pairBlend",
+        name=f"{in_obj_1.name()}_{in_obj_2.name()}_blend" if name is None else name
+    )
+    for attr in channels:
+        in_obj_1.attr(attr.lower()) >> pairblend.attr(f"in{attr.capitalize()}1")
+        in_obj_2.attr(attr.lower()) >> pairblend.attr(f"in{attr.capitalize()}2")
+        pairblend.attr(f"out{attr.capitalize()}") >> result_obj.attr(attr.lower())
+    return pairblend
+
+
 def attach_group_to_edge(edge, name="test", grp_count=1, ctrl=True):
     pnt_on_crv_grps = []
     shape = edge.node()

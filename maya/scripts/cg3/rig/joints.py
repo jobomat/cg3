@@ -6,6 +6,29 @@ from cg3.util.hirarchies import add_group
 from cg3.geo.transforms import place_along_curve
 
 
+def joint_chain_replicator(joint_chain: list, name: str, search: str, replicas=["_ik", "_fk"]):
+    """
+    Replicates the given hirarchicaly related joints for each name in 'replicas'.
+    Replaces the 'search' string with the replica string.
+    """
+    rep_parents = []
+    parent = None
+    for rep in replicas:
+        for i, joint in enumerate(joint_chain):
+            n = joint.name().replace(search, "")
+            dup = pc.duplicate(joint, name=f"{n}{rep}")[0]
+            for child in dup.getChildren():
+                pc.delete(child)
+            if i == 0:
+                grp = pc.group(dup, name=f"{name}{rep}_grp")
+                pc.parent(grp, world=True)
+                rep_parents.append(grp)
+            else:
+                pc.parent(dup, parent)
+            parent = dup
+    return rep_parents
+
+
 def single_joint_ctrl(name: str, postfix: str="_bnd") -> pc.nodetypes.Joint:
     """Creates a single joint as children of a NurbsCircle and two groups."""
     jnt = pc.joint(name=f"{name}{postfix}", p=(0, 0, 0))
