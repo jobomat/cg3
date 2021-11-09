@@ -109,96 +109,6 @@ def ik_stretch(ik_handle, pole=None, lock=False, max_stretch=5, name=None, paren
     return (div_node, clamp_node, ik_grp)
 
 
-def create_curve_based_scale_setup(ik_handle: pc.nodetypes.IkHandle, name: str=None):
-    """
-    Sets up the x-scaling of joints that are members of 'ik_handle'
-    based on the ration of current curve length to original curve length. 
-    """
-    joints = ik_handle.getJointList()
-    if name is None:
-        name = joints[0].name()
-    ik_curve = pc.PyNode(ik_handle.getCurve())
-
-    crv_info = pc.createNode("curveInfo", name=f"{name}_ik_crvinfo")
-    div_node = pc.createNode("multiplyDivide", name=f"{name}_ik_div")
-    div_node.setAttr("operation", 2)
-    ik_curve.worldSpace >> crv_info.inputCurve
-    crv_info.arcLength >> div_node.input1X
-    div_node.setAttr("input2X", crv_info.getAttr("arcLength"))
-
-    for joint in joints:
-        div_node.outputX >> joint.scaleX
-
-    return crv_info, div_node.attr("outputX")
-
-
-def create_spline_ik(start_joint: pc.nodetypes.Joint,
-                     end_joint: pc.nodetypes.Joint,
-                     name: str=None, curve_spans: int=4) -> Tuple[pc.nodetypes.IkHandle, pc.nodetypes.NurbsCurve, str]:
-    """Mini wrapper around splineIk creation. Enables more than 4 spans."""
-    name = name or "".join(start_joint.name[:-1])
-    ik_handle, ik_effector, ik_curve = pc.ikHandle(
-        n="{}_spline_ik".format(name),
-        sol="ikSplineSolver", pcv=False, ns=curve_spans
-    )
-    ik_curve.rename("{}_ik_crv".format(name))
-    ik_effector.rename("{}_spline_effector".format(name))
-    ik_handle.visibility.set(False)
-    ik_handle.addAttr("scale_power", k=True)
-    ik_curve.visibility.set(False)
-    return ik_handle, ik_curve, name
-
-
-def setup_advanced_twist_control(ik_handle:pc.nodetypes.IkHandle,
-                                 start_up_obj: pc.nodetypes.Transform,
-                                 end_up_obj: pc.nodetypes.Transform):
-    ik_handle.dTwistControlEnable.set(True)
-    ik_handle.dWorldUpType.set(4)  # Type: Object rotation up (start/end)
-    ik_handle.dWorldUpAxis.set(0)  # Up Axis: Positive Y
-    ik_handle.dWorldUpVectorX.set(0)
-    ik_handle.dWorldUpVectorY.set(1)
-    ik_handle.dWorldUpVectorZ.set(0)
-    ik_handle.dWorldUpVectorEndX.set(0)
-    ik_handle.dWorldUpVectorEndY.set(1)
-    ik_handle.dWorldUpVectorEndZ.set(0)
-
-    start_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrix
-    end_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrixEnd
-
-def setup_squash_stretch(ik_handle:pc.nodetypes.IkHandle, scale_factor_attr: pc.Attribute, name: str):
-    """
-    Creates an expression and frameCache based setup for preserving the volume
-    when a stretchy splineIK is squashed/stretched.
-    """
-    joint_list = ik_handle.getJointList()
-    if not ik_handle.hasAttr("scale_power"):
-        ik_handle.addAttr("scale_power", at="float")
-    scale_power_attr = ik_handle.attr("scale_power")
-    scale_power_attr.setKey(t=1, v=0)
-    scale_power_attr.setKey(t=len(joint_list), v=0)
-    anim_curve_node = scale_power_attr.listConnections()[0]
-    anim_curve_node.setWeighted(True)
-    pc.keyTangent(anim_curve_node, e=True, absolute=True, t=1, outAngle=50)
-    pc.keyTangent(anim_curve_node, e=True, absolute=True, t=len(joint_list), inAngle=-50)
-
-    frame_caches = []
-    expression = [
-        f"$scale = {scale_factor_attr.name()};",
-        f"$sqrt = 1 / sqrt($scale);"
-    ]
-    for i, joint in enumerate(joint_list, 1):
-        frame_cache = pc.createNode("frameCache", n=f"{name}_{joint.name()}_fc")
-        frame_cache.varyTime.set(i)
-        scale_power_attr >> frame_cache.stream
-        expression.append(f"{joint.name()}.sy = pow($sqrt, {frame_cache.name()}.varying);")
-        expression.append(f"{joint.name()}.sz = pow($sqrt, {frame_cache.name()}.varying);")
-        frame_caches.append(frame_cache)
-        
-    expression = "\n".join(expression)
-    expression_node = pc.expression(s=expression, n=f"{name}_expr")
-    return expression_node, frame_caches
-
-
 class StretchyIK():
     def __init__(self):
         self.script_jobs = []
@@ -364,3 +274,35 @@ class StretchyIK():
     def kill_script_jobs(self, *args):
         for job in self.script_jobs:
             pc.scriptJob(kill=job, force=True)
+
+
+# def recommend_up_vector(ik_handle, spline_ik_joint, up_object):
+#     """
+#     Returns the recommended up vector value for the advanced twist control up vector.
+#     The spline_ik_joint is the joint driven by the spline ik solver.
+#     The up_object is the object controlling the twist. 
+#     """
+#     # ik handle attribute dWorldUpAxis-codes are as follows:
+#     # 0: +y | 1: -y | 2: ?y | 3: +z | 4: -z | 5: ?z | 6: +x | 7: -x | 8: ?x
+#     axes_map = (
+#         (0, 1, 0), (0, -1, 0), (0, 1, 0),
+#         (0, 0, 1), (0, 0, -1), (0, 0, 1),
+#         (1, 0, 0), (-1, 0, 0), (1, 0, 0)
+#     )
+#     translate_values = axes_map[ik_handle.dWorldUpAxis.get()]
+
+#     ref_loc = pc.spaceLocator(p=(0, 0, 0))
+#     pc.delete(pc.pointConstraint(up_object, ref_loc))
+#     pc.delete(pc.orientConstraint(spline_ik_joint, ref_loc))
+
+#     loc = pc.spaceLocator(p=(0, 0, 0))
+#     pc.parent(loc, ref_loc)
+#     loc.setTranslation(translate_values)
+#     pc.parent(loc, up_object, absolute=True)
+#     new_translate_values = loc.translate.get()
+
+#     pc.delete(loc, ref_loc)
+#     return new_translate_values
+
+
+# print(recommend_up_vector(ik_handle, joint, up_object))

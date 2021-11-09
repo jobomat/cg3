@@ -20,7 +20,7 @@
             "sourceType": "python", 
             "image": "addShapes.png", 
             "label": "Add Shapes", 
-            "command": "from cg3.geo.shapes import add_shapes\n\nsel = pc.selected()\nif len(sel) != 2:\n\tpc.warning('Please selecte exactly two objects.')\nelse:\n\tadd_shapes(sel[0], sel[1])", 
+            "command": "import pymel.core as pc\nfrom cg3.geo.shapes import add_shapes\n\nsel = pc.selected()\nif len(sel) != 2:\n\tpc.warning('Please selecte exactly two objects.')\nelse:\n\tadd_shapes(sel[0], sel[1])", 
             "image1": "addGroup.png", 
             "annotation": "Add shapes found in the first selected object to the second selected object."
         }, 

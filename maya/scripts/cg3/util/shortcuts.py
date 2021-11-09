@@ -14,6 +14,9 @@ import maya.api.OpenMaya as OpenMaya2
 logger = logging.getLogger(__name__)
 
 
+def clamp(value, minv, maxv): return max(min(value, maxv), minv)
+
+
 def get_mobject(node):
     """Get the MObject of the given node.
 
