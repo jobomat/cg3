@@ -6,6 +6,21 @@ from cg3.util.hirarchies import add_group
 from cg3.geo.transforms import place_along_curve
 
 
+def get_twist_axis(jnt):
+    axes = [(1,0,0), (-1,0,0), (0,1,0), (0,-1,0), (0,0,1), (0,0,-1)]
+    child_translation = jnt.getChildren()[0].translate.get()
+    val = 0
+    index = None
+    for i, t in enumerate(child_translation):
+        if t > val:
+            val = t
+            index = i * 2
+        elif abs(t) > val:
+            val = abs(t)
+            index = i * 2 + 1
+    return axes[index]
+
+
 def joint_chain_replicator(joint_chain: list, name: str, search: str, replicas=["_ik", "_fk"]):
     """
     Replicates the given hirarchicaly related joints for each name in 'replicas'.

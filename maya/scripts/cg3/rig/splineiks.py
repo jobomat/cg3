@@ -4,7 +4,7 @@ import pymel.core as pc
 
 from cg3.geo.curves import get_curve_length
 from cg3.rig.utils import insert_normalized_scale_node
-from cg3.rig.joints import create_joint_controls_along_curve
+from cg3.rig.joints import create_joint_controls_along_curve, get_twist_axis
 from cg3.ui.maya_gui import get_selected_channelbox_attributes
 
 
@@ -24,6 +24,35 @@ def create_spline_ik(
     ik_handle.addAttr("scale_power", k=True)
     ik_curve.visibility.set(False)
     return ik_handle, ik_curve, name
+
+
+def recommend_up_vector(ik_handle, spline_ik_joint, up_object):
+    """
+    Returns the recommended up vector value for the advanced twist control up vector.
+    The spline_ik_joint is the joint driven by the spline ik solver.
+    The up_object is the object controlling the twist. 
+    """
+    # ik handle attribute dWorldUpAxis-codes are as follows:
+    # 0: +y | 1: -y | 2: ?y | 3: +z | 4: -z | 5: ?z | 6: +x | 7: -x | 8: ?x
+    axes_map = (
+        (0, 1, 0), (0, -1, 0), (0, 1, 0),
+        (0, 0, 1), (0, 0, -1), (0, 0, 1),
+        (1, 0, 0), (-1, 0, 0), (1, 0, 0)
+    )
+    translate_values = axes_map[ik_handle.dWorldUpAxis.get()]
+
+    ref_loc = pc.spaceLocator(p=(0, 0, 0))
+    pc.delete(pc.pointConstraint(up_object, ref_loc, mo=False))
+    pc.delete(pc.orientConstraint(spline_ik_joint, ref_loc, mo=False))
+
+    loc = pc.spaceLocator(p=(0, 0, 0))
+    pc.parent(loc, ref_loc)
+    loc.setTranslation(translate_values)
+    pc.parent(loc, up_object, absolute=True)
+    new_translate_values = loc.translate.get()
+
+    pc.delete(loc, ref_loc)
+    return new_translate_values
 
 
 def create_curve_based_scale_setup(
@@ -61,18 +90,30 @@ def setup_advanced_twist_control(ik_handle: pc.nodetypes.IkHandle,
     Y will be set to be the up axis.
     The up axis will be bound to the Y axis of start_up_obj and end_up_obj. 
     """
-    ik_handle.dTwistControlEnable.set(True)
     ik_handle.dWorldUpType.set(4)  # Type: Object rotation up (start/end)
-    ik_handle.dWorldUpAxis.set(0)  # Up Axis: Positive Y
-    ik_handle.dWorldUpVectorX.set(0)
-    ik_handle.dWorldUpVectorY.set(1)
-    ik_handle.dWorldUpVectorZ.set(0)
-    ik_handle.dWorldUpVectorEndX.set(0)
-    ik_handle.dWorldUpVectorEndY.set(1)
-    ik_handle.dWorldUpVectorEndZ.set(0)
+    start_joint = ik_handle.getJointList()[0]
+    end_joint = ik_handle.getJointList()[-1]
+    twist_axis = get_twist_axis(start_joint)
+    forward_axis_map = {
+        (1,0,0): 0, (-1,0,0): 1,
+        (0,1,0): 2, (0,-1,0): 3,
+        (0,0,1): 4, (0,0,-1): 5
+    }
+    fa = forward_axis_map[twist_axis]
+    ik_handle.dForwardAxis.set(fa)
+    up_axis_map = [0,0,3,3,6,6]
+    ik_handle.dWorldUpAxis.set(up_axis_map[fa])  
+    ik_handle.dWorldUpVector.set(
+        recommend_up_vector(ik_handle, start_joint, start_up_obj)
+    )
+    ik_handle.dWorldUpVectorEnd.set(
+        recommend_up_vector(ik_handle, end_joint, end_up_obj)
+    )
 
     start_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrix
     end_up_obj.attr("worldMatrix[0]") >> ik_handle.dWorldUpMatrixEnd
+
+    ik_handle.dTwistControlEnable.set(True)
 
 
 def setup_squash_stretch(ik_handle: pc.nodetypes.IkHandle, scale_factor_attr: pc.Attribute, name: str):
