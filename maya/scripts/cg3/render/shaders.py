@@ -5,6 +5,7 @@ from uuid import uuid4
 import json
 from typing import Dict, List
 import pymel.core as pc
+from collections import defaultdict
 
 
 def get_suid_map() -> Dict[str, pc.nodetypes.ShadingEngine]:
@@ -103,3 +104,18 @@ def create_assignment_dict(shapes: List[pc.nodetypes.Mesh]) -> Dict[str, Dict[st
         if shape.hasAttr("shaderAssignments"):
             shapes_with_assignment[shape.name()] = json.loads(shape.shaderAssignments.get())
     return shapes_with_assignment
+
+
+def list_suid_shaders():
+    """Create a dict where the key is the staticUid of a ShadingGroup
+    and the value is a list of all ShadingGroups with this uid.
+
+    Useful for detecting staticUid-Collisions.
+    (Each staticUid should only be present once!)
+    """
+    suid_dict = defaultdict(list)   
+    for sg in pc.ls(type="shadingEngine"):
+        if sg.hasAttr("staticUid"):
+            suid_dict[sg.staticUid.get()].append(sg)
+        
+    return suid_dict
