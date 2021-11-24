@@ -152,7 +152,6 @@ class QuickFileOpen(qw.QVBoxLayout):
 
         self.completer = None
         self.update_completer()
-        cg3event.subscribe("asset_created", self.on_asset_created)
 
         self.open_button = qw.QPushButton("Nothing selected")
         self.open_button.setDisabled(True)
@@ -325,26 +324,34 @@ class QuickAssetCreator(qw.QVBoxLayout):
             print(f"Asset {name} already exists. Ignored.")
 
 
-class QuickFiler(MayaQWidgetDockableMixin, qw.QDialog):
+class QuickFiler(MayaQWidgetDockableMixin, qw.QWidget):
     """Collection window for file related actions."""
 
     def __init__(self, asset_provider):
         super().__init__(maya_main_window())
         project_settings = get_project_settings()
 
+        self.asset_provider = asset_provider
+
         self.setGeometry(0, 0, 300, 500)
-        cg3event.subscribe("asset_created", asset_provider.on_asset_created)
+
+        cg3event.subscribe("asset_created", self.asset_provider.on_asset_created)
 
         self.main_layout = qw.QVBoxLayout(self)
         self.main_layout.setAlignment(qc.Qt.AlignTop)
         
-        qfc = QuickAssetCreator(self, asset_provider, "ma")
-        self.main_layout.addLayout(qfc)
+        self.qfc = QuickAssetCreator(self, self.asset_provider, "ma")
+        self.main_layout.addLayout(self.qfc)
 
         self.main_layout.addWidget(QHLine())
 
-        qfo = QuickFileOpen(asset_provider)
-        self.main_layout.addLayout(qfo)
+        self.qfo = QuickFileOpen(self.asset_provider)
+        cg3event.subscribe("asset_created", self.qfo.on_asset_created)
+        self.main_layout.addLayout(self.qfo)
 
         self.setWindowTitle("Quick Filer")
         self.show(dockable=True)
+    
+    def dockCloseEventTriggered(self):
+        cg3event.unsubscribe("asset_created", self.asset_provider.on_asset_created)
+        cg3event.unsubscribe("asset_created", self.qfo.on_asset_created)

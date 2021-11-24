@@ -15,7 +15,7 @@ from PySide2.QtWidgets import (
 
 from cg3.ui.windows import maya_main_window
 from cg3.util.names import legalize_text
-from cg3.file.dirtree import Dir
+from cg3.file.dirtree import Dirtree
 
 
 class DirtreeEditor(MayaQWidgetDockableMixin, QMainWindow):
@@ -29,6 +29,8 @@ class DirtreeEditor(MayaQWidgetDockableMixin, QMainWindow):
         show_info_btn.clicked.connect(self.show_info)
 
         toolbar = self.addToolBar("Tools")
+        action = toolbar.addAction("Read Directory Structure")
+        action.triggered.connect(self.read_from_path)
         action = toolbar.addAction("Print Dirtree")
         action.triggered.connect(self.print_dirtree)
         action.setToolTip("Print the current Tree as Dictionary.")
@@ -71,7 +73,7 @@ class DirtreeEditor(MayaQWidgetDockableMixin, QMainWindow):
 
     def print_dirtree(self):
         filePath = Path(self.model.filePath(self.tree_view.rootIndex()))
-        pprint.pprint(Dir().read_from_path(filePath))
+        pprint.pprint(Dirtree().read_from_path(filePath))
 
     def get_index(self):
         indexes = self.tree_view.selectedIndexes()
@@ -137,6 +139,13 @@ class DirtreeEditor(MayaQWidgetDockableMixin, QMainWindow):
             self, 'Rename', 'New Name:', QLineEdit.Normal, filename)
         if ok:
             os.rename(file_path, os.path.join(dirname, legalize_text(text,allow=".")))
+
+    def read_from_path(self):
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        if directory:
+            dirtree = Dirtree().read_from_path(Path(directory))
+            print(dirtree.as_dict())
+        
 
 
 #DirtreeEditor()

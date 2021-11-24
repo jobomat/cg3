@@ -274,35 +274,3 @@ class StretchyIK():
     def kill_script_jobs(self, *args):
         for job in self.script_jobs:
             pc.scriptJob(kill=job, force=True)
-
-
-# def recommend_up_vector(ik_handle, spline_ik_joint, up_object):
-#     """
-#     Returns the recommended up vector value for the advanced twist control up vector.
-#     The spline_ik_joint is the joint driven by the spline ik solver.
-#     The up_object is the object controlling the twist. 
-#     """
-#     # ik handle attribute dWorldUpAxis-codes are as follows:
-#     # 0: +y | 1: -y | 2: ?y | 3: +z | 4: -z | 5: ?z | 6: +x | 7: -x | 8: ?x
-#     axes_map = (
-#         (0, 1, 0), (0, -1, 0), (0, 1, 0),
-#         (0, 0, 1), (0, 0, -1), (0, 0, 1),
-#         (1, 0, 0), (-1, 0, 0), (1, 0, 0)
-#     )
-#     translate_values = axes_map[ik_handle.dWorldUpAxis.get()]
-
-#     ref_loc = pc.spaceLocator(p=(0, 0, 0))
-#     pc.delete(pc.pointConstraint(up_object, ref_loc))
-#     pc.delete(pc.orientConstraint(spline_ik_joint, ref_loc))
-
-#     loc = pc.spaceLocator(p=(0, 0, 0))
-#     pc.parent(loc, ref_loc)
-#     loc.setTranslation(translate_values)
-#     pc.parent(loc, up_object, absolute=True)
-#     new_translate_values = loc.translate.get()
-
-#     pc.delete(loc, ref_loc)
-#     return new_translate_values
-
-
-# print(recommend_up_vector(ik_handle, joint, up_object))

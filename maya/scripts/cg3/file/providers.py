@@ -1,3 +1,5 @@
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
 from abc import ABC, abstractmethod
 from typing import List
 from pathlib import Path
@@ -5,6 +7,7 @@ import re
 
 from cg3.file.models import Asset
 from cg3.env.settings import get_project_settings, get_user_settings
+from cg3.event import cg3event
 
 
 class AssetProvider(ABC):
@@ -21,6 +24,10 @@ class AssetProvider(ABC):
     def reload_asset_list(self):
         """Trigger a complete reload of the asset list."""
 
+    @abstractmethod
+    def on_asset_created(self, asset:Asset):
+        """Do whatever is necessary if new Asset is created"""
+
 
 class MockAssetProvider(AssetProvider):
     def __init__(self, settings=None):
@@ -32,7 +39,7 @@ class MockAssetProvider(AssetProvider):
             ("set", "kitchen"), ("set", "park"),
             ("seq", "s0100"), ("seq", "s0200"), ("seq", "s0250")
         )
-        self.assets = {name: Asset(kind, name) for kind, name in kind_name}
+        self.assets = {name: Asset(kind, name, "ma") for kind, name in kind_name}
         for _, asset in self.assets.items():
             asset.new_version(asset.get_deps()[0])
             if "e" in asset.name:
@@ -50,6 +57,9 @@ class MockAssetProvider(AssetProvider):
     
     def reload_asset_list(self):
         pass
+
+    def on_asset_created(self, asset):
+        print(asset)
 
 
 class FilesystemAssetProvider(AssetProvider):
@@ -104,3 +114,78 @@ class FilesystemAssetProvider(AssetProvider):
 
     def list_assets(self) -> List[Asset]:
         return sorted(self.assets.values())
+
+
+class GoogleSheetsAssetProvider(AssetProvider):
+    def __init__(self, auth_json: str, sheet_name: str, settings=None):
+        Asset.settings = self.settings = settings or get_project_settings()
+        Asset.user_settings = self.user_settings = get_user_settings()
+
+        scope = ['https://spreadsheets.google.com/feeds',
+                 'https://www.googleapis.com/auth/drive']
+        creds = ServiceAccountCredentials.from_json_keyfile_name(auth_json, scope)
+        client = gspread.authorize(creds)
+
+        self.asset_sheet = client.open(sheet_name).sheet1
+
+        self.assets = {}
+        self.reload_asset_list()
+
+    def sort_asset_sheet(self):
+        # sort by asset, kind, dep, version
+        # so the reload_asset_list method will work correct
+        self.asset_sheet.sort(
+            (1, "asc"), (2, "asc"), (4, "asc"), (5, "asc")
+        )
+
+    def reload_asset_list(self):
+        self.sort_asset_sheet()
+        results = self.asset_sheet.get_all_records()
+
+        current_asset_name = None
+        #current_dep = None
+
+        for result in results:
+            asset_name = result["asset"]
+            if current_asset_name != asset_name:
+                current_asset_name = result["asset"]
+                self.assets[current_asset_name] = Asset(
+                    result["kind"], current_asset_name, result["extension"]
+                )
+                #current_dep = None
+            else:
+                dep = result["dep"]
+                user = result["user"]
+                version = str(result["version"]).zfill(4)
+                timestamp = str(result["timestamp"])
+                comment = result["comment"]
+                self.assets[current_asset_name].add_version_scene(
+                    dep, user, version, timestamp, comment
+                )
+    
+    def get(self, name: str) -> Asset:
+        return self.assets.get(name, None)
+
+    def list_assets(self) -> List[Asset]:
+        return sorted(self.assets.values())
+
+    def on_asset_created(self, asset):
+        """On creation add two rows.
+        Fist one for the asset "idea", 
+        the second for the first created file."""
+        self.assets[asset.name] = asset
+        start_dep = asset.get_start_dep()
+        scene = asset.get_max_version_scene(start_dep)
+        self.asset_sheet.append_row((
+            asset.name, asset.kind, "WIP",
+            None, None,None, None, None, scene.extension
+        ))
+        self.asset_sheet.append_row((
+            asset.name, None, None,
+            start_dep, 1, "Initial Save",
+            scene.user, scene.timestamp, scene.extension
+        ))
+        self.reload_asset_list()
+        
+# auth_json = "C:/Users/jobo/Documents/maya/2022/gspread_key.json"
+# sheet_name = "joboproject"

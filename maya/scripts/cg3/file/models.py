@@ -7,7 +7,6 @@ from string import Template
 
 from cg3.env.settings import Settings
 
-
 @dataclass
 class Scene:
     kind: str
@@ -17,6 +16,7 @@ class Scene:
     user: str = field(default="unknown")
     timestamp: int = None
     _version: int = None
+    comment: str = ""
 
     @property
     def version(self):
@@ -37,7 +37,8 @@ class Scene:
             "dep": self.dep,
             "user": self.user,
             "timestamp": self.timestamp,
-            "version": self.version
+            "version": self.version,
+            "comment": self.comment
         }
 
 
@@ -104,7 +105,7 @@ class Asset(metaclass=AssetMeta):
             self.get_release_path(dep).mkdir(parents=True, exist_ok=True)
             self.get_release_history_path(dep).mkdir(parents=True, exist_ok=True)
 
-    def new_version(self, dep: str, user="unknown"):
+    def new_version(self, dep: str, user:str="unknown", comment:str=""):
         if not dep in self.deps:
             self.deps[dep] = []
         try:
@@ -112,16 +113,17 @@ class Asset(metaclass=AssetMeta):
         except IndexError:
             version = 0
         self.deps[dep].append(
-            Scene(self.kind, self.name, self.extension, dep, user, int(time()), version + 1)
+            Scene(self.kind, self.name, self.extension,
+                  dep, user, int(time()), version + 1, comment)
         )
 
-    def add_version_scene(self, dep: str, user: str, version: str, timestamp: str=None):
+    def add_version_scene(self, dep: str, user: str, version: str, timestamp: str=None, comment: str=""):
         if not self.deps.get(dep, False):
             self.deps[dep] = []
         self.deps[dep].append(
             Scene(
                 self.kind, self.name, self.extension,
-                dep, user, timestamp, int(version)
+                dep, user, timestamp, int(version), comment
             )
         )
 
@@ -174,6 +176,11 @@ class Asset(metaclass=AssetMeta):
 
     def get_deps(self):
         return list(self.deps.keys())
+
+    def get_start_dep(self):
+        return Asset.settings.kinds.get(self.kind).get(
+            "start_dep", Asset.settings.default_start_dep
+        )
 
     def list_versions(self, dep):
         return self.deps.get(dep, None)

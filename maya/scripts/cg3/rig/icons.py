@@ -6,7 +6,7 @@ import json
 import pymel.core as pc
 
 from cg3.viewport.wireframe import colorize
-from cg3.geo.shapes import rotate_shapes, set_unrenderable
+from cg3.geo.shapes import rotate_shapes, set_unrenderable, add_shapes
 import cg3.geo.curves as curves
 from cg3.util.names import get_legal_character
 import cg3.util.hirarchies as hir
@@ -264,6 +264,10 @@ class RigIcons():
             label="Replace selected curve shapes",
             c=pc.Callback(self.replace_selected_with_icon, i)
         )
+        pc.menuItem(
+            label="Set as joint shape",
+            c=pc.Callback(self.add_as_joint_shape, i)
+        )
         #     cmds.menuItem(d=True)
         #     cmds.menuItem(label="Take Thumbnail Screenshot", c=partial( self.iconScreenshot, i) )
         #     cmds.setParent('..')
@@ -329,6 +333,14 @@ class RigIcons():
             curves.replace_shapes([old, new])
         pc.select(sel)
 
+    def add_as_joint_shape(self, index):
+        sel = pc.selected()
+        for jnt in [j for j in sel if type(j) == pc.nodetypes.Joint]:
+            icon = self.create_rig_icon(index, group=False)
+            add_shapes(icon, jnt)
+            pc.delete(icon)
+        pc.select(sel)
+
     def create_curve_hirarchy(self, transforms, name):
         t = None
         for transform in transforms:
@@ -373,8 +385,8 @@ class RigIcons():
             rotate_shapes(transform, [a * angle for a in axes])
             children = transform.getChildren(type="transform")
             pivot = transform.getAttr("worldMatrix")[3][:-1]
-            for child in children:
-                rotate_shapes(child, [a * angle for a in axes], pivot)
+            #for child in children:
+            #    rotate_shapes(child, [a * angle for a in axes], pivot)
 
     def enable_centered_scale(self, *args):
         curves = [c.getShape() for c in pc.selected() if type(c.getShape()) == pc.nodetypes.NurbsCurve]
