@@ -4,8 +4,10 @@ Functions related to shaders and their connections to shapes.
 from uuid import uuid4
 import json
 from typing import Dict, List
-import pymel.core as pc
 from collections import defaultdict
+from pathlib import Path
+
+import pymel.core as pc
 
 
 def get_suid_map() -> Dict[str, pc.nodetypes.ShadingEngine]:
@@ -59,14 +61,16 @@ def get_shader_assignment(shape: pc.nodetypes.Mesh) -> Dict[str, List[int]]:
 
 def write_shader_assignment(shape: pc.nodetypes.Mesh):
     """Write a dictionary returned by function "get_shader_assignment"
-    to an attribute named "shaderAssignments" on the given shape.
+    to an attribute named "shaderAssignments" on transform of the given shape.
     """
     sg_assignment_dict = get_shader_assignment(shape)
     if not sg_assignment_dict:
         return
-    if not shape.hasAttr("shaderAssignments"):
-        shape.addAttr("shaderAssignments", dt="string")
-    shape.shaderAssignments.set(json.dumps(sg_assignment_dict))
+    transform = shape.getParent()
+    print(transform)
+    if not transform.hasAttr("shaderAssignments"):
+        transform.addAttr("shaderAssignments", dt="string")
+    transform.shaderAssignments.set(json.dumps(sg_assignment_dict))
 
 
 def reassign_shaders(shape: pc.nodetypes.Mesh, namespace: str=""):
@@ -74,14 +78,15 @@ def reassign_shaders(shape: pc.nodetypes.Mesh, namespace: str=""):
     by function "write_shader_assignent".
     if "namespace" is not empty it will be added to shading group name.
     """
-    if not shape.hasAttr("shaderAssignments"):
+    transform = shape.getParent()
+    if not transform.hasAttr("shaderAssignments"):
         return
-    sg_assignment = json.loads(shape.shaderAssignments.get())
+    sg_assignment = json.loads(transform.shaderAssignments.get())
     for suid, faces_list in sg_assignment.items():
         shading_group = get_suid_map().get(suid, None)
         if shading_group is None:
             continue
-        sg_string = "{}:{}".format(namespace, shading_group.name())
+        sg_string = f"{namespace}:{shading_group.name()}"
         if faces_list:
             pc.sets(sg_string, forceElement=shape.f[faces_list])
             continue
@@ -90,7 +95,7 @@ def reassign_shaders(shape: pc.nodetypes.Mesh, namespace: str=""):
 
 def create_assignment_dict(shapes: List[pc.nodetypes.Mesh]) -> Dict[str, Dict[str, List[int]]]:
     """Given a list of Shape nodes return a dict
-    wherethe key is the shape nodes name
+    wherethe key is the shape nodes parent (transform) name
     and the value is a dict with the staticUids as key and the face indices as value.
 
     Obtain all shapes in a group:
@@ -98,15 +103,16 @@ def create_assignment_dict(shapes: List[pc.nodetypes.Mesh]) -> Dict[str, Dict[st
         shapes = obj.listRelatives(ad=True, type="shape")
         create_assignment_dict(shapes)
     """
-    shapes_with_assignment = {}
+    transforms_with_assignment = {}
 
     for shape in shapes:
-        if shape.hasAttr("shaderAssignments"):
-            shapes_with_assignment[shape.name()] = json.loads(shape.shaderAssignments.get())
-    return shapes_with_assignment
+        transform = shape.getParent()
+        if transform.hasAttr("shaderAssignments"):
+            transforms_with_assignment[transform.name()] = json.loads(transform.shaderAssignments.get())
+    return transforms_with_assignment
 
 
-def list_suid_shaders():
+def list_suid_shaders() -> Dict[str, pc.nodetypes.ShadingEngine]:
     """Create a dict where the key is the staticUid of a ShadingGroup
     and the value is a list of all ShadingGroups with this uid.
 
@@ -119,3 +125,16 @@ def list_suid_shaders():
             suid_dict[sg.staticUid.get()].append(sg)
         
     return suid_dict
+
+
+def list_suid_in_file(file: str):
+    shader_file = Path(file)
+    with shader_file.open("r") as sf:
+        sf_lines = sf.readlines()
+
+    static_uids = []
+    for line in sf_lines:
+        if line.startswith('\tsetAttr ".staticUid" -type "string" '):
+            static_uids.append(line.split('"')[5])
+
+    return static_uids

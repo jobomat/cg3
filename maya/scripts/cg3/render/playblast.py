@@ -6,7 +6,8 @@ import pymel.core as pc
 from cg3.ui.widgets import file_chooser_button
 from cg3.env.vars import FRAME_RATE_MAP
 from cg3.env.settings import SettingsManagerMixin
-from cg3.util.process import SubQ, Ffmpeg, BatchRender, HW2PreRenderMel, RenderFlag
+from cg3.util.process import SubQ
+from cg3.render.processes import Ffmpeg, BatchRender, HW2PreRenderMel, RenderFlag
 
 
 RENDERER_MAP = {"Hardware 2.0": "hw2", "Arnold": "arnold"}

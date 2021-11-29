@@ -187,5 +187,4 @@ class GoogleSheetsAssetProvider(AssetProvider):
         ))
         self.reload_asset_list()
         
-# auth_json = "C:/Users/jobo/Documents/maya/2022/gspread_key.json"
-# sheet_name = "joboproject"
+
