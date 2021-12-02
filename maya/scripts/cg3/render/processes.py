@@ -1,4 +1,10 @@
+import sys
+import os
 from pathlib import Path
+from datetime import datetime
+from dataclasses import dataclass
+
+import pymel.core as pc
 
 
 class DrawText:
@@ -225,7 +231,7 @@ class BatchRender:
             RenderFlag("-pad", p, "Padding Zeros"),
             RenderFlag("-rd", rd, "Render to"),
             RenderFlag("-of", of, "File Format"),
-            
+            RenderFlag("-fnc", 3, "File Naming Convention")
         ]
 
     def cmd(self):

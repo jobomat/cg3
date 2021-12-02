@@ -5,7 +5,6 @@ import tempfile
 import time
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import pymel.core as pc

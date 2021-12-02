@@ -100,9 +100,11 @@ class BackgroundPlayblast(SettingsManagerMixin):
                             value1=default_resolution.width.get(),
                             value2=default_resolution.height.get()
                         )
-                    with pc.frameLayout(label="Hardware 2.0 Render Settings") as self.renderer_fl:
+                    pc.separator(h=1, style="none")
+                    with pc.frameLayout(label="Hardware 2.0 Render Settings", bgc=(0.09, 0.16, 0.29), mh=4, mw=4, collapsable=True) as self.renderer_fl:
                         self.build_hw2_rendersettings()
-                    with pc.frameLayout(label="FFMPEG Encoding Settings"):
+                    pc.separator(h=1, style="none")
+                    with pc.frameLayout(label="FFMPEG Encoding Settings", bgc=(0.07, 0.22, 0.25), mh=4, mw=4, collapsable=True):
                         with pc.columnLayout(adj=True):
                             self.mp4_tfg = file_chooser_button(
                                 "MP4 File", 0, " Save as... ",
@@ -125,9 +127,10 @@ class BackgroundPlayblast(SettingsManagerMixin):
                                     okCaption="Choose",
                                     tfb_kwargs={'cw3': (75, 100, 50), "cat": (1, "right", 0)}
                                 )
-                    with pc.frameLayout(label="Burn Ins"):
+                    pc.separator(h=1, style="none")
+                    with pc.frameLayout(label="Burn Ins", bgc=(0.14, 0.14, 0.14), mh=4, mw=4, collapsable=True):
                         with pc.columnLayout(adj=True):
-                            with pc.rowColumnLayout(nc=3):
+                            with pc.rowLayout(nc=3, ct3=("left", "left", "left") ,co3=(0,0,4)):
                                 with pc.optionMenuGrp(label="Presets", cw=(1, 60), cal=(1, "left"), cc=self.change_drawtext) as self.burnin_presets_MenuGrp:
                                     for item in self.settings.burnin_presets.keys():
                                         pc.menuItem(item)
@@ -171,12 +174,14 @@ class BackgroundPlayblast(SettingsManagerMixin):
                             "50%",
                             c=pc.Callback(self.set_half_resolution)
                         )
-                    
-                with pc.horizontalLayout() as button_hl:
+                    pc.separator(h=2)    
+                with pc.horizontalLayout(ratios=(1,1,2)) as button_hl:
+                    pc.button(label="Render", c=pc.Callback(self.run, ["render"]), bgc=(0.09, 0.16, 0.29))
+                    pc.button(label="Encode", c=pc.Callback(self.run, ["encode"]), bgc=(0.07, 0.22, 0.25))
                     pc.button(
-                        label="Render + Encode", c=pc.Callback(self.run, ["render", "encode"]))
-                    pc.button(label="Render", c=pc.Callback(self.run, ["render"]))
-                    pc.button(label="Encode", c=pc.Callback(self.run, ["encode"]))
+                        label="Render + Encode", c=pc.Callback(self.run, ["render", "encode"]),
+                        bgc=(.5,.5,.5)
+                    )
                     # pc.button(label="Close")
 
         main_fl.attachForm(self.main_cl, "top", padding)
@@ -292,7 +297,7 @@ class BackgroundPlayblast(SettingsManagerMixin):
                     f.ui = pc.intField(value=f.value, w=25)
                 pc.text(label="", w=5)
                 self.arnold_lic_checkBox = pc.checkBox(
-                    label="Skip License Check", value=True, w=120
+                    label="Skip License Check", value=False, w=120
                 )
     
     def add_drawtext(self, col_layout, text=""):
@@ -308,7 +313,7 @@ class BackgroundPlayblast(SettingsManagerMixin):
             pc.menuItem("Camera Name", c=pc.Callback(line.setText, "<camera>"))
 
     def get_encode_cmd(self):
-        ff = Ffmpeg(self.ffmpeg_exe_tfg.getText())
+        ff = Ffmpeg(exe=self.ffmpeg_exe_tfg.getText())
 
         ff.box_opacity = 0.5
 
