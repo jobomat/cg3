@@ -1,8 +1,8 @@
 import pymel.core as pc
 
-from capito.maya.util.names import legalize_text, get_legal_character
-from capito.maya.geo.shapes import get_symmetry_dict
-from capito.maya.rig.deformers import (
+from cg3.util.names import legalize_text, get_legal_character
+from cg3.geo.shapes import get_symmetry_dict
+from cg3.rig.deformers import (
     get_soft_selection_values,
     create_soft_cluster,
     edit_soft_cluster_weights,

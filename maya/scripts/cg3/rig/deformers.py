@@ -2,7 +2,7 @@ import maya.OpenMaya as om1
 import maya.api.OpenMaya as om
 import pymel.core as pc
 
-from capito.maya.geo.shapes import get_used_shapes
+from cg3.geo.shapes import get_used_shapes
 
 
 def list_inputs_of_type(transform, nodetype):
