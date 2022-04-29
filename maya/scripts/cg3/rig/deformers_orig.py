@@ -2,7 +2,7 @@ import maya.OpenMaya as om1
 import maya.api.OpenMaya as om
 import pymel.core as pc
 
-from capito.maya.geo.shapes import get_used_shapes
+from cg3.geo.shapes import get_used_shapes
 
 
 def list_inputs_of_type(transform, nodetype):
@@ -15,7 +15,10 @@ def list_inputs_of_type(transform, nodetype):
     :return: A list of matching nodes
     :rtype: list
     """
-    return [s for s in transform.listHistory() if isinstance(s, nodetype)]
+    return [
+        s for s in transform.listHistory()
+        if isinstance(s, nodetype)
+    ]
 
 
 def get_orig_shape(transform):
@@ -25,26 +28,23 @@ def get_orig_shape(transform):
 
     :param transform: The pymel transform node to check.
     :type transform: :class:`pymel.core.nodetypes.Transform`
-    :return: The original shape node or None
+    :return: The shapeOrig node or None
     :rtype: :class:`pymel.core.nodetypes.Mesh`
     :raises: None
     """
-    all_shapes = transform.getShapes()
-    if len(all_shapes) == 1:
-        return all_shapes[0]
-    original_shapes = [s for s in transform.getShapes() if s.intermediateObject.get()]
-    if original_shapes:
-        return original_shapes[0]
-    return None
-
-
-def get_visible_shape(transform):
-    all_shapes = transform.getShapes()
-    if len(all_shapes) == 1:
-        return all_shapes[0]
-    visible_shapes = [s for s in all_shapes if not s.intermediateObject.get()]
-    if visible_shapes:
-        return visible_shapes[0]
+    visible_shape = transform.getShape()
+    os = [s for s in get_used_shapes(transform) if s != visible_shape]
+    if len(os) == 1:
+        return os[0]
+    elif len(os) > 1:
+        for bs in list_inputs_of_type(transform, pc.nodetypes.BlendShape):
+            origs = pc.listConnections(bs.originalGeometry, shapes=True)
+            if origs:
+                return origs[0]
+        for sc in list_inputs_of_type(transform, pc.nodetypes.SkinCluster):
+            origs = pc.listConnections(sc.originalGeometry, shapes=True)
+            if origs:
+                return origs[0]
     return None
 
 
@@ -68,20 +68,17 @@ def duplicate_orig_shape(transform):
     pc.mel.eval("sets - e - forceElement initialShadingGroup")
     return dup[0]
 
-
 def get_soft_selection_values():
     """Returns a dict based on current soft vertex selection.
     Dict-Key is representing the vertex-index and is of type int.
     Dict-Value is representing the selection weight and is of type float.
-
+    
     :rtype: dict{vertindex (int): weight (float)}
     :raises: None
     """
     rich_selection = om.MGlobal.getRichSelection()
 
-    sel_iter = om.MItSelectionList(
-        rich_selection.getSelection(), om.MFn.kMeshVertComponent
-    )
+    sel_iter = om.MItSelectionList(rich_selection.getSelection(), om.MFn.kMeshVertComponent)
     weight_dict = {}
 
     while not sel_iter.isDone():
@@ -95,7 +92,7 @@ def get_soft_selection_values():
     return weight_dict
 
 
-def set_cluster_pivots_to_pos(cluster_handle: pc.nodetypes.Transform, pos: list):
+def set_cluster_pivots_to_pos(cluster_handle:pc.nodetypes.Transform, pos:list):
     """Sets visual appearance, scale- and rotate pivot of cluster to pos
 
     :param cluster_handle: The pymel transform of the cluster.
@@ -140,7 +137,7 @@ def create_soft_cluster(name=None, shape=None, weight_dict=None, pivot_pos=None)
     if pivot_pos is None:
         highest_weight_index = max(weight_dict, key=lambda key: weight_dict[key])
         pivot_pos = shape.vtx[highest_weight_index].getPosition(space="world")
-
+    
     name = name or f"{shape.name()}_{len(shape.listHistory(type='cluster')) + 1}"
 
     pc.select(shape.getParent(), r=True)
@@ -174,4 +171,5 @@ def edit_soft_cluster_weights(cluster_handle, weight_dict=None):
     count = ids.length()
 
     for i in range(count):
-        weight_plug.elementByLogicalIndex(ids[i]).setFloat(weight_dict.get(i, 0.0))
+        weight_plug.elementByLogicalIndex(
+            ids[i]).setFloat(weight_dict.get(i, 0.0))

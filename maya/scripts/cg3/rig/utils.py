@@ -1,8 +1,12 @@
-import pymel.core as pc
+from typing import Tuple
+
 import maya.OpenMaya as om
+import pymel.core as pc
 
 
-def place_at_point(child, parent, orient=False):
+def place_at_point(
+    child: pc.nodetypes.Transform, parent: pc.nodetypes.Transform, orient: bool = False
+) -> None:
     """Places or places and orients child at parent.
 
     :param child: The transform node to be placed.
@@ -22,7 +26,12 @@ def place_at_point(child, parent, orient=False):
         pc.delete(pc.pointConstraint(parent, child))
 
 
-def locator_at_point(point, locator=True, orient=False, name=None):
+def locator_at_point(
+    point: pc.nodetypes.Transform,
+    locator: bool = True,
+    orient: bool = False,
+    name: str = None,
+) -> pc.nodetypes.Transform:
     """Returns a locator or empty transform at 'point'.
 
     :param point: The transform node to create the locator at.
@@ -46,12 +55,12 @@ def locator_at_point(point, locator=True, orient=False, name=None):
         loc = pc.spaceLocator(name=name)
     else:
         loc = pc.group(empty=True, name=name)
-    place_at_point(loc, point)
+    place_at_point(loc, point, orient)
 
     return loc
 
 
-def distance_between(t1, t2):
+def distance_between(t1: pc.nodetypes.Transform, t2: pc.nodetypes.Transform) -> float:
     """Returns the exact distance between transforms t1 and t2.
     Not calculated using python (sqrt((x2-x1)**2 ...) because
     of loss of precision!
@@ -77,7 +86,9 @@ def distance_between(t1, t2):
     return dist
 
 
-def hierarchy_len(parent, child):
+def hierarchy_len(
+    parent: pc.nodetypes.Transform, child: pc.nodetypes.Transform
+) -> float:
     """Returns the sum of distances between pivots of a hierarchical
     structure starting with parent and ending with child. Useful e.g.
     to get the combined (bone) length of a joint-chain.
@@ -100,9 +111,9 @@ def hierarchy_len(parent, child):
 
 
 def get_free_md_channels(
-    node=None,
-    name=None,
-):
+    node: pc.nodetypes.MultiplyDivide = None,
+    name: str = None
+) -> Tuple[pc.general.Attribute]:
     """Returns the first free channel of a given multiplyDivide node.
     If no node is given or no channel is availible creates a new node.
 
@@ -136,7 +147,9 @@ def get_free_md_channels(
             )
 
 
-def insert_normalized_scale_node(unnormalized_attr, scalefactor_attr, normalize_node=None, name=None):
+def insert_normalized_scale_node(
+    unnormalized_attr, scalefactor_attr, normalize_node=None, name=None
+):
     """Adds a multyplyDivide node to unnormalized_attr (which is usually
     the output of another multyplyDivide node) and compensates its output
     by a division with scalefactor_attr. Reconnects normalized value to old destination.
@@ -169,7 +182,7 @@ def insert_normalized_scale_node(unnormalized_attr, scalefactor_attr, normalize_
     unnormalized_attr >> normalize_node_channels[0]
     scalefactor_attr >> normalize_node_channels[1]
     for dest_attr in dest_attrs:
-	    normalize_node_channels[2] >> dest_attr
+        normalize_node_channels[2] >> dest_attr
 
     return normalize_node
 
@@ -221,7 +234,9 @@ def scalefactor_node(m1, m2, div_node=None, initial_len=None, name=None):
     return div_node, div_node_channels[2]
 
 
-def point_on_curve_info_nodes(curve: pc.nodetypes.NurbsCurve, num_points: int, name: str=None) -> list:
+def point_on_curve_info_nodes(
+    curve: pc.nodetypes.NurbsCurve, num_points: int, name: str = None
+) -> list:
     name = name or curve.name()
     u_step = 1.0 / (num_points - 1)
     u_values = [x * u_step for x in range(num_points)]
@@ -234,12 +249,21 @@ def point_on_curve_info_nodes(curve: pc.nodetypes.NurbsCurve, num_points: int, n
         curve.attr("worldSpace[0]") >> info_node.inputCurve
         info_nodes.append(info_node)
     return info_nodes
-    
 
-def distance_points_between_to_curves(curve1: pc.nodetypes.NurbsCurve, curve2: pc.nodetypes.NurbsCurve, num_points: int, name: str=None) -> list:
+
+def distance_points_between_to_curves(
+    curve1: pc.nodetypes.NurbsCurve,
+    curve2: pc.nodetypes.NurbsCurve,
+    num_points: int,
+    name: str = None,
+) -> list:
     name = name or f"{curve1.name()}_{curve2.name()}"
-    info_nodes_1 = point_on_curve_info_nodes(curve1, num_points, f"{curve1.name()}_info")
-    info_nodes_2 = point_on_curve_info_nodes(curve2, num_points, f"{curve2.name()}_info")
+    info_nodes_1 = point_on_curve_info_nodes(
+        curve1, num_points, f"{curve1.name()}_info"
+    )
+    info_nodes_2 = point_on_curve_info_nodes(
+        curve2, num_points, f"{curve2.name()}_info"
+    )
     dist_nodes = []
     i = 1
     for info_1, info_2 in zip(info_nodes_1, info_nodes_2):
@@ -256,11 +280,13 @@ def create_pairblend(
     in_obj_1: pc.nodetypes.Transform,
     in_obj_2: pc.nodetypes.Transform,
     result_obj: pc.nodetypes.Transform,
-    name: str=None, channels=["translate", "rotate"]):
+    name: str = None,
+    channels=["translate", "rotate"],
+):
     """creates ab pairblend from in_obj_1.channel and in_obj2.channel to result_obj.channel"""
     pairblend = pc.createNode(
         "pairBlend",
-        name=f"{in_obj_1.name()}_{in_obj_2.name()}_blend" if name is None else name
+        name=f"{in_obj_1.name()}_{in_obj_2.name()}_blend" if name is None else name,
     )
     for attr in channels:
         in_obj_1.attr(attr.lower()) >> pairblend.attr(f"in{attr.capitalize()}1")
@@ -286,7 +312,8 @@ def attach_group_to_edge(edge, name="test", grp_count=1, ctrl=True):
         )
         point_on_curve_info.setAttr("turnOnPercentage", 1)
         pnt_on_crv_grp = pc.group(
-            empty=True, name="{}_e{}_u{}_grp".format(name, edge_num, int(i * u_step * 100))
+            empty=True,
+            name="{}_e{}_u{}_grp".format(name, edge_num, int(i * u_step * 100)),
         )
         pnt_on_crv_grp.addAttr("uPos", k=True)
         pnt_on_crv_grp.uPos >> point_on_curve_info.parameter
@@ -306,5 +333,3 @@ def attach_group_to_edge(edge, name="test", grp_count=1, ctrl=True):
         pnt_on_crv_grps.append(pnt_on_crv_grp)
 
     return pnt_on_crv_grps
-
-

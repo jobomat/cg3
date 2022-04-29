@@ -128,7 +128,7 @@ class BackgroundPlayblast(SettingsManagerMixin):
                                     tfb_kwargs={'cw3': (75, 100, 50), "cat": (1, "right", 0)}
                                 )
                     pc.separator(h=1, style="none")
-                    with pc.frameLayout(label="Burn Ins", bgc=(0.14, 0.14, 0.14), mh=4, mw=4, collapsable=True):
+                    with pc.frameLayout(label="Burn Ins", bgc=(0.284, 0.18, 0.07), mh=4, mw=4, collapsable=True):
                         with pc.columnLayout(adj=True):
                             with pc.rowLayout(nc=3, ct3=("left", "left", "left") ,co3=(0,0,4)):
                                 with pc.optionMenuGrp(label="Presets", cw=(1, 60), cal=(1, "left"), cc=self.change_drawtext) as self.burnin_presets_MenuGrp:

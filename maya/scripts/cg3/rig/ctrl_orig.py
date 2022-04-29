@@ -1,15 +1,10 @@
 import pymel.core as pc
 
-from capito.maya.util.names import legalize_text, get_legal_character
-from capito.maya.geo.shapes import get_symmetry_dict
-from capito.maya.rig.deformers import (
-    get_soft_selection_values,
-    create_soft_cluster,
-    edit_soft_cluster_weights,
-    list_inputs_of_type,
-    duplicate_orig_shape,
-    get_orig_shape,
-    get_visible_shape
+from cg3.util.names import legalize_text, get_legal_character
+from cg3.geo.shapes import get_symmetry_dict
+from cg3.rig.deformers import (
+    get_soft_selection_values, create_soft_cluster, edit_soft_cluster_weights,
+    list_inputs_of_type, duplicate_orig_shape, get_orig_shape
 )
 
 
@@ -24,9 +19,9 @@ def slider_control(name, two_sided=True):
             (0.1, min_val, 0),
             (0.1, 1, 0),
             (-0.1, 1, 0),
-            (-0.1, min_val, 0),
+            (-0.1, min_val, 0)
         ],
-        k=[0, 1, 2, 3, 4],
+        k=[0, 1, 2, 3, 4]
     )
     rect_shape = rect.getShape()
     # set shape  to referenzed display mode
@@ -43,11 +38,9 @@ def slider_control(name, two_sided=True):
     for attr in ("tx", "tz", "rx", "ry", "rz", "sx", "sy", "sz"):
         ctrl.setAttr(attr, keyable=False, lock=True, channelBox=False)
 
-    pc.addAttr(ctrl, ln="val1", r=True, hidden=False, at="double", min=0, max=1, dv=0)
+    pc.addAttr(ctrl, ln="val1", r=True, hidden=False, at='double', min=0, max=1, dv=0)
     if two_sided:
-        pc.addAttr(
-            ctrl, ln="val2", r=True, hidden=False, at="double", min=0, max=1, dv=0
-        )
+        pc.addAttr(ctrl, ln="val2", r=True, hidden=False, at='double', min=0, max=1, dv=0)
     # build expression
     expressionString = "{0}.val1 = clamp( 0, 1, {0}.ty );".format(ctrl)
     if two_sided:
@@ -64,8 +57,14 @@ def four_corner_control(name):
     rect = pc.curve(
         n="{}_frame_crv".format(name),
         d=1,
-        p=[(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0), (-1, -1, 0)],
-        k=[0, 1, 2, 3, 4],
+        p=[
+            (-1, -1, 0),
+            (1, -1, 0),
+            (1, 1, 0),
+            (-1, 1, 0),
+            (-1, -1, 0)
+        ],
+        k=[0, 1, 2, 3, 4]
     )
     rect_shape = rect.getShape()
     # set shape  to referenzed display mode
@@ -83,7 +82,7 @@ def four_corner_control(name):
         ctrl.setAttr(attr, keyable=False, lock=True, channelBox=False)
 
     for attr in ["topLeftVal", "topRightVal", "bottomLeftVal", "bottomRightVal"]:
-        pc.addAttr(ctrl, ln=attr, r=True, at="double", min=0, max=1, dv=0, keyable=True)
+        pc.addAttr(ctrl, ln=attr, r=True, at='double', min=0, max=1, dv=0, keyable=True)
 
     # build expression
     expressionString = """
@@ -91,9 +90,7 @@ def four_corner_control(name):
         {0}.topRightVal = clamp( 0,1,{0}.translateY * (1 - clamp( 0,1,{0}.translateX ) ) );
         {0}.bottomRightVal = clamp( 0,1,-{0}.translateY * (1 - clamp( 0,1,{0}.translateX ) ) );
         {0}.bottomLeftVal = clamp( 0,1,-{0}.translateY * (1 + clamp( -1,0,{0}.translateX ) ) );
-        """.format(
-        ctrl
-    )
+        """.format(ctrl)
     # set expression
     pc.expression(o=ctrl, s=expressionString, n="{}_expression".format(ctrl))
     # parent
@@ -144,7 +141,6 @@ class BlendShapePrompt:
     """A helper class for asking the user for the correct BlendShape Node
     in the process of creating a StickyControlManager Setup.
     """
-
     def __init__(self, transform, callback):
         self.NEW_BS_TEXT = "New Blendshape Node"
         self.window_name = "blendshape_adder_win"
@@ -165,22 +161,15 @@ class BlendShapePrompt:
 
         with pc.window(self.window_name, title=self.window_title) as self.win:
             with pc.formLayout(numberOfDivisions=100) as self.main_fl:
-                with pc.scrollLayout(
-                    childResizable=True, vsb=False
-                ) as self.top_container:
+                with pc.scrollLayout(childResizable=True, vsb=False) as self.top_container:
                     with pc.columnLayout(adj=True):
                         pc.text(
                             label="Please specify where to add the BS-Target",
-                            align="left",
-                            font="boldLabelFont",
+                            align="left", font="boldLabelFont"
                         )
                         pc.separator(h=10)
-                        with pc.optionMenuGrp(
-                            label="Add Target to:", cw2=(90, 90), adj=2
-                        ) as self.bs_optionMenuGrp:
-                            for bs in list_inputs_of_type(
-                                self.transform, pc.nodetypes.BlendShape
-                            ):
+                        with pc.optionMenuGrp(label="Add Target to:", cw2=(90, 90), adj=2) as self.bs_optionMenuGrp:
+                            for bs in list_inputs_of_type(self.transform, pc.nodetypes.BlendShape):
                                 pc.menuItem(label=bs.name())
                                 self.bs_dict[bs.name()] = bs
                             pc.menuItem(label=self.NEW_BS_TEXT)
@@ -196,8 +185,7 @@ class BlendShapePrompt:
         self.main_fl.attachForm(self.bottom_container, "right", self.padding)
         self.main_fl.attachForm(self.bottom_container, "bottom", self.padding)
         self.main_fl.attachControl(
-            self.top_container, "bottom", self.padding, self.bottom_container
-        )
+            self.top_container, "bottom", self.padding, self.bottom_container)
         self.main_fl.attachNone(self.bottom_container, "top")
 
     def ok(self, *args):
@@ -227,20 +215,16 @@ STD_ORIENT = "orient_object"
 
 class StickyControlManager:
     def __init__(self, group=None):
-        self.symmetry_matrices = {"x": [-1, 1, 1], "y": [1, -1, 1], "z": [1, 1, -1]}
+        self.symmetry_matrices = {
+            "x": [-1, 1, 1],
+            "y": [1, -1, 1],
+            "z": [1, 1, -1]
+        }
         if group:
             self.grp = group
             self.init_class_attributes()
 
-    def create(
-        self,
-        transform,
-        name="sticky",
-        offset_translate=1.0,
-        offset_orient=1.0,
-        callback=None,
-        callback_manager_list=None,
-    ):
+    def create(self, transform, name="sticky", offset_translate=1.0, offset_orient=1.0, callback=None, callback_manager_list=None):
         self.transform, self.name = transform, name
         self.offset_translate, self.offset_orient = offset_translate, offset_orient
         self.callback = callback
@@ -289,26 +273,21 @@ class StickyControlManager:
         if bs_node is None:
             pc.warning("Unable to setup BlendShape. Aborting.")
             return
-        #bs_node.rename(f"{self.name}_bs")
+        bs_node.rename(f"{self.name}_bs")
 
         index_list = bs_node.weightIndexList()
         index = 0 if not index_list else index_list[-1] + 1
 
         bs_transform = duplicate_orig_shape(self.transform)
         bs_transform.rename(f"{self.name}_bs_geo")
-        print("298 bs_transform", bs_transform)
         bs_node.addTarget(
-            baseObject=get_visible_shape(self.transform),
-            fullWeight=1.0,
-            targetType="object",
-            weightIndex=index,
-            newTarget=bs_transform.getShape(),
+            baseObject=self.transform.getShape(), fullWeight=1.0, targetType='object',
+            weightIndex=index, newTarget=bs_transform.getShape()
         )
 
         if not bs_node.hasAttr(self.grp.name()):
             bs_node.addAttr(self.grp.name(), at="message")
         self.grp.attr(BS_NODE) >> bs_node.attr(self.grp.name())
-
         if not bs_transform.hasAttr(GRP):
             bs_transform.addAttr(GRP, at="message")
         self.grp.attr(BS_TRANS) >> bs_transform.attr(GRP)
@@ -332,7 +311,7 @@ class StickyControlManager:
         proxpin.offsetOrientation.set(1)
         orig_shape = get_orig_shape(self.transform)
         orig_shape.outMesh >> proxpin.originalGeometry
-        get_visible_shape(self.transform).worldMesh >> proxpin.deformedGeometry
+        self.transform.getShape().worldMesh >> proxpin.deformedGeometry
         if not proxpin.hasAttr(GRP):
             proxpin.addAttr(GRP, at="bool")
         self.grp.attr(PROX) >> proxpin.attr(GRP)
@@ -376,29 +355,13 @@ class StickyControlManager:
 
 
 class StickyControl:
-    def __init__(
-        self,
-        name=None,
-        manager=None,
-        ctrl=None,
-        weight_dict=None,
-        orient_to=None,
-        initial_pin_pos=None,
-        connect_translate=True,
-        connect_rotate=True,
-        connect_scale=True,
-    ):
+    def __init__(self, name=None, manager=None, ctrl=None,
+                 weight_dict=None, orient_to=None, initial_pin_pos=None,
+                 connect_translate=True, connect_rotate=True, connect_scale=True):
         if ctrl is None:
-            self.create(
-                name=name or "sticky",
-                manager=manager,
-                weight_dict=weight_dict,
-                orient_to=orient_to,
-                initial_pin_pos=initial_pin_pos,
-                connect_translate=connect_translate,
-                connect_rotate=connect_rotate,
-                connect_scale=connect_scale,
-            )
+            self.create(name=name or "sticky", manager=manager,
+                        weight_dict=weight_dict, orient_to=orient_to, initial_pin_pos=initial_pin_pos,
+                        connect_translate=connect_translate, connect_rotate=connect_rotate, connect_scale=connect_scale)
         else:
             self.init_from_ctrl(ctrl)
 
@@ -406,17 +369,9 @@ class StickyControl:
         self.ctrl = ctrl
         self.manager = StickyControlManager(ctrl.attr(GRP).listConnections()[-1])
 
-    def create(
-        self,
-        name=None,
-        manager=None,
-        weight_dict=None,
-        orient_to=None,
-        initial_pin_pos=None,
-        connect_translate=True,
-        connect_rotate=True,
-        connect_scale=True,
-    ):
+    def create(self, name=None, manager=None,
+               weight_dict=None, orient_to=None, initial_pin_pos=None,
+               connect_translate=True, connect_rotate=True, connect_scale=True):
         self.manager = manager
 
         if weight_dict is None:
@@ -431,9 +386,8 @@ class StickyControl:
         pc.parent(ctrl_grp, self.manager.grp)
 
         cluster_handle = create_soft_cluster(
-            name=name,
-            shape=self.manager.bs_transform.getShape(),
-            weight_dict=weight_dict,
+            name=name, shape=self.manager.bs_transform.getShape(),
+            weight_dict=weight_dict
         )
         cluster_handle.hide()
         cluster = cluster_handle.attr("worldMatrix[0]").listConnections()[0]
@@ -451,10 +405,7 @@ class StickyControl:
         indices = self.manager.prox_node.attr("inputMatrix").getArrayIndices()
         i = 0 if not indices else max(indices) + 1
         input_pin.matrix >> self.manager.prox_node.attr("inputMatrix[{}]".format(i))
-        (
-            self.manager.prox_node.attr(f"outputMatrix[{i}]")
-            >> output_pin.offsetParentMatrix
-        )
+        self.manager.prox_node.attr(f"outputMatrix[{i}]") >> output_pin.offsetParentMatrix
 
         offset_grp = pc.group(empty=True, n=f"{name}_offset_grp")
         ctrl = pc.circle(radius=0.2)[0]
@@ -485,33 +436,36 @@ class StickyControl:
             (cluster_handle, "cluster_handle"),
             (cluster, "cluster"),
             (output_pin, "output_pin"),
-            (input_pin, "input_pin"),
+            (input_pin, "input_pin")
         )
         for node, attr in connection_list:
             self.ctrl.addAttr(attr, at="message")
             node.addAttr("ctrl", at="message")
             self.ctrl.attr(attr) >> node.ctrl
-
+             
         pc.select(self.ctrl)
 
     def edit_weights(self, weight_dict=None):
         edit_soft_cluster_weights(self.cluster_handle, weight_dict)
 
     def is_connected(self, channel):
-        """channel must be "t", "r" or "s" """
-        return pc.isConnected(
-            self.ctrl.attr(channel), self.cluster_handle.attr(channel)
-        )
+        """channel must be "t", "r" or "s"
+        """
+        return pc.isConnected(self.ctrl.attr(channel), self.cluster_handle.attr(channel))
 
     def connection_array(self):
-        return (self.is_connected("t"), self.is_connected("r"), self.is_connected("s"))
+        return (
+            self.is_connected("t"), self.is_connected("r"), self.is_connected("s")
+        )
 
     def connect(self, channel):
-        """channel must be "t", "r" or "s" """
+        """channel must be "t", "r" or "s"
+        """
         self.ctrl.attr(channel) >> self.cluster_handle.attr(channel)
 
     def disconnect(self, channel):
-        """channel must be "t", "r" or "s" """
+        """channel must be "t", "r" or "s"
+        """
         self.ctrl.attr(channel) // self.cluster_handle.attr(channel)
         self.cluster_handle.attr(channel).set(
             (1, 1, 1) if channel == "s" else (0, 0, 0)
@@ -546,14 +500,11 @@ class StickyControl:
     def create_symmetry_control(self, name, sym_matrix=None):
         sym_matrix = sym_matrix or [-1, 1, 1]
         sym_pin_pos = [
-            v * m for v, m in zip(self.ctrl.getTranslation(space="world"), sym_matrix)
+            v * m for v,m in zip(self.ctrl.getTranslation(space="world"), sym_matrix)
         ]
         sc = StickyControl(
-            name,
-            self.manager,
-            orient_to=self.orient_object,
-            initial_pin_pos=sym_pin_pos,
-            weight_dict=self.get_symmetry_weights(),
+            name, self.manager, orient_to=self.orient_object, initial_pin_pos=sym_pin_pos,
+            weight_dict=self.get_symmetry_weights()
         )
         self.ctrl.symmetry_control >> sc.ctrl.symmetry_control
 
@@ -581,7 +532,7 @@ class StickyControl:
     @property
     def cluster_handle(self):
         return self.ctrl.attr("cluster_handle").listConnections()[0]
-
+    
     @property
     def input_pin(self):
         return self.ctrl.attr("input_pin").listConnections()[0]
@@ -600,11 +551,7 @@ class StickyControl:
     @property
     def orient_object(self):
         ocs = self.output_pin.listRelatives(children=True, type="orientConstraint")
-        return (
-            None
-            if not ocs
-            else ocs[0].attr("target[0].targetRotate").listConnections()[0]
-        )
+        return None if not ocs else ocs[0].attr("target[0].targetRotate").listConnections()[0]
 
     @property
     def orient_object_constraint(self):
@@ -629,7 +576,7 @@ def is_sticky_controler(transform):
     return transform.hasAttr(GRP)
 
 
-class StickyControllers:
+class StickyControllers():
     def __init__(self):
         self.win_id = "sticky_ctrl_window"
         self.manager = None
@@ -661,9 +608,7 @@ class StickyControllers:
             with pc.formLayout() as form_layout:
                 with pc.columnLayout(adj=True) as self.manager_select_cl:
                     with pc.rowLayout(nc=2, adj=1):
-                        with pc.optionMenu(
-                            h=20, cc=self.manager_selected
-                        ) as self.manager_option_menu:
+                        with pc.optionMenu(h=20, cc=self.manager_selected) as self.manager_option_menu:
                             pass
                         pc.button("Add Sticky Setup", h=20, c=self.add_sticky_setup)
                     pc.separator(h=10)
@@ -671,15 +616,11 @@ class StickyControllers:
                     with pc.rowLayout(nc=3, cw3=(cw1, 1, 80), adj=2):
                         pc.text(label="Std Orient Object")
                         self.std_orient_tf = pc.textField(
-                            pht="MMB Drop Object",
-                            text="",
-                            editable=True,
-                            tcc=pc.Callback(self.set_manager_orient_object),
+                            pht="MMB Drop Object", text="", editable=True, 
+                            tcc=pc.Callback(self.set_manager_orient_object)
                         )
                         self.std_orient_button = pc.button(
-                            label="Clear",
-                            c=self.clear_manager_orient_object,
-                            enable=False,
+                            label="Clear", c=self.clear_manager_orient_object, enable=False
                         )
                     # TODO: Symmetry Options: Search/Replace and Mirror-Axis
                     pc.separator(h=10)
@@ -688,33 +629,21 @@ class StickyControllers:
                         with pc.rowLayout(nc=5, cw5=(cw1, 90, 80, 60, 1), adj=5):
                             pc.text(label="Symmetry Options")
                             self.search_tfg = pc.textFieldGrp(
-                                label="Replace: ",
-                                cw2=(45, 40),
-                                text="l_",
-                                tcc=self.set_search_string,
+                                label="Replace: ", cw2=(45,40), text="l_",
+                                tcc=self.set_search_string
                             )
                             self.replace_tfg = pc.textFieldGrp(
-                                label="with: ",
-                                cw2=(33, 40),
-                                text="r_",
-                                tcc=self.set_replace_string,
+                                label="with: ", cw2=(33, 40), text="r_",
+                                tcc=self.set_replace_string
                             )
                             pc.text(label="Direction:")
-                            with pc.optionMenu(
-                                cc=self.set_symmetry_direction
-                            ) as self.symmetry_direction_menu:
+                            with pc.optionMenu(cc=self.set_symmetry_direction) as self.symmetry_direction_menu:
                                 pc.menuItem("x")
                                 pc.menuItem("y")
                                 pc.menuItem("z")
 
                         pc.separator(h=10)
-                        pc.iconTextButton(
-                            style="iconAndTextHorizontal",
-                            i="addCreateGeneric.png",
-                            label="Add Controller",
-                            h=20,
-                            c=self.add_controller,
-                        )
+                        pc.iconTextButton(style="iconAndTextHorizontal", i="addCreateGeneric.png", label="Add Controller", h=20, c=self.add_controller)
                     with pc.scrollLayout(cr=True, h=27) as self.controller_header_sl:
                         with pc.rowLayout(nc=6, cw6=self.cw6_h, adj=1):
                             pc.checkBox(label="Name", cc=self.select_all)
@@ -727,9 +656,7 @@ class StickyControllers:
                                 pc.text(label="S", al="center")
                             pc.text(label="", w=self.reweight_w)
                             pc.text(label="", w=self.del_w + scrollbar_thickness)
-                    with pc.scrollLayout(
-                        cr=True, bgc=(0.2, 0.2, 0.2), vsb=True, vst=scrollbar_thickness
-                    ) as controller_sl:
+                    with pc.scrollLayout(cr=True, bgc=(0.2, 0.2, 0.2), vsb=True, vst=scrollbar_thickness) as controller_sl:
                         with pc.columnLayout(adj=True) as self.controller_list_cl:
                             pass
                     with pc.rowLayout(nc=3) as self.actions_rl:
@@ -739,43 +666,26 @@ class StickyControllers:
                             pc.menuItem(label="Clear Orient Object")
                             pc.menuItem(label="Delete")
                         pc.button("Go", h=20, c=self.batch_action)
-
+        
         # adjust form attachments for controller area
-        for c in (
-            self.controller_add_cl,
-            self.controller_header_sl,
-            controller_sl,
-            self.actions_rl,
-        ):
-            self.controllers_fl.attachForm(c, "left", 0)
-            self.controllers_fl.attachForm(c, "right", 0)
-        self.controllers_fl.attachForm(self.controller_add_cl, "top", 0)
-        self.controllers_fl.attachForm(self.actions_rl, "bottom", 0)
+        for c in (self.controller_add_cl, self.controller_header_sl, controller_sl, self.actions_rl):
+            self.controllers_fl.attachForm(c, 'left', 0)
+            self.controllers_fl.attachForm(c, 'right', 0)
+        self.controllers_fl.attachForm(self.controller_add_cl, 'top', 0)
+        self.controllers_fl.attachForm(self.actions_rl, 'bottom', 0)
 
-        self.controllers_fl.attachControl(
-            self.controller_header_sl, "top", 0, self.controller_add_cl
-        )
-        self.controllers_fl.attachControl(
-            controller_sl, "top", 0, self.controller_header_sl
-        )
+        self.controllers_fl.attachControl(self.controller_header_sl, "top", 0, self.controller_add_cl)
+        self.controllers_fl.attachControl(controller_sl, "top", 0, self.controller_header_sl)
         self.controllers_fl.attachControl(controller_sl, "bottom", 0, self.actions_rl)
 
         # adjust form attachment for overall layout
-        for c in (
-            self.manager_select_cl,
-            self.manager_attributes_cl,
-            self.controllers_fl,
-        ):
-            form_layout.attachForm(c, "left", p)
-            form_layout.attachForm(c, "right", p)
-        form_layout.attachForm(self.manager_select_cl, "top", p)
-        form_layout.attachForm(self.controllers_fl, "bottom", p)
-        form_layout.attachControl(
-            self.manager_attributes_cl, "top", p, self.manager_select_cl
-        )
-        form_layout.attachControl(
-            self.controllers_fl, "top", p, self.manager_attributes_cl
-        )
+        for c in (self.manager_select_cl, self.manager_attributes_cl, self.controllers_fl):
+            form_layout.attachForm(c, 'left', p)
+            form_layout.attachForm(c, 'right', p)
+        form_layout.attachForm(self.manager_select_cl, 'top', p)
+        form_layout.attachForm(self.controllers_fl, 'bottom', p)
+        form_layout.attachControl(self.manager_attributes_cl, "top", p, self.manager_select_cl)
+        form_layout.attachControl(self.controllers_fl, "top", p, self.manager_attributes_cl)
 
         self.enable_manager_layouts(False)
         self.enable_controllers_layouts(False)
@@ -788,7 +698,8 @@ class StickyControllers:
         self.on_selection_changed()
 
     def on_selection_changed(self):
-        """check what has to be updated in the gui"""
+        """check what has to be updated in the gui
+        """
         sel = pc.selected()
         if not sel:
             return
@@ -813,8 +724,9 @@ class StickyControllers:
             controler = StickyControl(ctrl=obj)
             if not self.manager == controler.manager:
                 self.update_gui(
-                    get_sticky_managers(controler.manager.transform), controler.manager
-                )
+                    get_sticky_managers(controler.manager.transform),
+                    controler.manager
+                )    
             self.select_controller_checkbox(controler)
 
     def update_gui(self, managers, selected_manager):
@@ -823,10 +735,10 @@ class StickyControllers:
         self.manager_option_menu.addItems([m.name for m in managers])
         if selected_manager:
             self.manager_option_menu.setValue(selected_manager.name)
-
+            
         if managers:
             self.enable_manager_layouts(True)
-
+        
         self.enable_controllers_layouts(False)
         self.update_manager_orient_object_gui()
         if self.manager:
@@ -836,9 +748,7 @@ class StickyControllers:
             self.search_tfg.setText("l_" if not s else s)
             r = self.manager.grp.attr("replace").get()
             self.replace_tfg.setText("r_" if not r else r)
-            self.symmetry_direction_menu.setValue(
-                self.manager.grp.symmetry_direction.get()
-            )
+            self.symmetry_direction_menu.setValue(self.manager.grp.symmetry_direction.get())
         self.build_control_list()
 
     def update_manager_orient_object_gui(self):
@@ -851,9 +761,7 @@ class StickyControllers:
             self.std_orient_tf.setText("")
             self.std_orient_tf.setEditable(True)
             self.std_orient_button.setEnable(False)
-        self.std_orient_tf.textChangedCommand(
-            pc.Callback(self.set_manager_orient_object)
-        )
+        self.std_orient_tf.textChangedCommand(pc.Callback(self.set_manager_orient_object))
 
     def build_control_list(self):
         for child in self.controller_list_cl.getChildren():
@@ -863,39 +771,32 @@ class StickyControllers:
         self.current_controls = []
         for c in self.manager.controls:
             control = StickyControl(ctrl=c)
-            with pc.rowLayout(
-                nc=6, cw6=self.cw6, adj=1, parent=self.controller_list_cl
-            ) as row:
+            with pc.rowLayout(nc=6, cw6=self.cw6, adj=1, parent=self.controller_list_cl) as row:
                 pc.checkBox(label=control.name)
                 with pc.popupMenu():
-                    pc.menuItem(
-                        "Select Control", c=pc.Callback(pc.select, control.ctrl)
-                    )
+                    pc.menuItem("Select Control", c=pc.Callback(pc.select, control.ctrl))
                 orient_obj = control.orient_object
                 ootf = pc.textField(
                     text="" if not orient_obj else orient_obj.name(long=False),
-                    pht="MMB Drop Object",
-                    editable=not orient_obj,
+                    pht="MMB Drop Object", editable=not orient_obj
                 )
                 with pc.popupMenu():
                     pc.menuItem(
                         "Clear",
-                        c=pc.Callback(self.clear_control_orient_object, control, ootf),
+                        c=pc.Callback(self.clear_control_orient_object, control, ootf)
                     )
                 ootf.textChangedCommand(
-                    (lambda x: None)
-                    if orient_obj
-                    else pc.Callback(self.set_control_orient_object, control, ootf)
+                    (lambda x: None) if orient_obj else pc.Callback(
+                        self.set_control_orient_object, control, ootf
+                    )
                 )
                 sym_tf = pc.textField(pht="RMB Click", editable=False)
                 with pc.popupMenu() as sym_menu:
                     pass
                 self.update_sym_menu(control, sym_tf, sym_menu)
-
+                    
                 pc.checkBoxGrp(
-                    label="",
-                    ncb=3,
-                    cw4=self.trs_cws,
+                    label="", ncb=3, cw4=self.trs_cws,
                     valueArray3=control.connection_array(),
                     of1=pc.Callback(control.disconnect, "t"),
                     on1=pc.Callback(control.connect, "t"),
@@ -905,16 +806,12 @@ class StickyControllers:
                     on3=pc.Callback(control.connect, "s"),
                 )
                 pc.button(
-                    label="Reweigh",
-                    al="center",
-                    w=self.reweight_w,
-                    c=pc.Callback(self.reweight, control),
+                    label="Reweigh", al="center", w=self.reweight_w,
+                    c=pc.Callback(self.reweight, control)
                 )
                 pc.iconTextButton(
-                    i="delete.png",
-                    w=self.del_w,
-                    style="iconOnly",
-                    c=pc.Callback(self.delete_control, control),
+                    i="delete.png", w=self.del_w, style="iconOnly",
+                    c=pc.Callback(self.delete_control, control)
                 )
             control.row = row
             self.current_controls.append(control)
@@ -928,7 +825,7 @@ class StickyControllers:
             pc.menuItem(
                 parent=sym_menu,
                 label="Create Mirrored Controller",
-                c=pc.Callback(self.create_mirrored_controller, control),
+                c=pc.Callback(self.create_mirrored_controller, control)
             )
         else:
             sym_tf.setText(sym_control.name)
@@ -936,12 +833,13 @@ class StickyControllers:
             pc.menuItem(
                 parent=sym_menu,
                 label=f"Push weights to {sym_control.name}",
-                c=pc.Callback(self.push_weights_to_symmetry_controller, control),
+                c=pc.Callback(
+                    self.push_weights_to_symmetry_controller, control)
             )
             pc.menuItem(
                 parent=sym_menu,
                 label=f"Break Connection to {sym_control.name}",
-                c=pc.Callback(self.disconnect_mirrored_controller, control),
+                c=pc.Callback(self.disconnect_mirrored_controller, control)
             )
 
     def batch_action(self, *args):
@@ -989,41 +887,35 @@ class StickyControllers:
         if len(sel) != 1:
             pc.warning("Please select exactly one Mesh!")
             return
-        result = pc.promptDialog(
-            title=f"Create Setup for {sel[0].name()}",
-            message="Enter Collection Name:",
-            button=["OK", "Cancel"],
-            defaultButton="OK",
-            cancelButton="Cancel",
-            dismissString="Cancel",
-        )
-        if result == "OK":
+        result = pc.promptDialog(title=f'Create Setup for {sel[0].name()}',
+                              message='Enter Collection Name:',
+                              button=['OK', 'Cancel'],
+                              defaultButton='OK',
+                              cancelButton='Cancel',
+                              dismissString='Cancel')
+        if result == 'OK':
             name = pc.promptDialog(query=True, text=True)
             future_name = f"{name}_grp"
         else:
             return
-
+        
         managers = get_sticky_managers(sel[0])
         if future_name in [m.name for m in managers]:
-            pc.warning(
-                f"Collection named '{name}' already exists. Please try again with another name."
-            )
+            pc.warning(f"Collection named '{name}' already exists. Please try again with another name.")
             return
 
         StickyControlManager().create(
-            sel[0], name, callback=self.update_gui, callback_manager_list=managers
+            sel[0], name,
+            callback=self.update_gui,
+            callback_manager_list=managers
         )
 
     def add_controller(self, *args):
         sel = pc.selected()
-        if not (
-            sel
-            and isinstance(sel[0], pc.general.MeshVertex)
-            and sel[0].node() == get_visible_shape(self.manager.transform)
-        ):
+        if not (sel and isinstance(sel[0], pc.general.MeshVertex) and sel[0].node() == self.manager.transform.getShape()):
             pc.confirmDialog(
                 title="Info",
-                message=f"Please soft select Verts of {self.manager.transform}",
+                message=f"Please soft select Verts of {self.manager.transform}"
             )
             pc.select(self.manager.transform)
             pc.selectType(v=True)
@@ -1031,22 +923,20 @@ class StickyControllers:
             pc.softSelect(sse=True)
             return
 
-        result = pc.promptDialog(
-            title=f"Add Controller to {self.manager.name}",
-            message="Controller Name:",
-            button=["OK", "Cancel"],
-            defaultButton="OK",
-            cancelButton="Cancel",
-            dismissString="Cancel",
-        )
-        if result == "OK":
+        result = pc.promptDialog(title=f'Add Controller to {self.manager.name}',
+                                 message='Controller Name:',
+                                 button=['OK', 'Cancel'],
+                                 defaultButton='OK',
+                                 cancelButton='Cancel',
+                                 dismissString='Cancel')
+        if result == 'OK':
             name = pc.promptDialog(query=True, text=True)
             StickyControl(name, self.manager, orient_to=self.manager.orient_object)
             self.update_gui(get_sticky_managers(self.manager.transform), self.manager)
             pc.selectMode(object=True)
         else:
             return
-
+        
     def enable_manager_layouts(self, enable):
         self.manager_attributes_cl.setEnable(enable)
         self.controller_add_cl.setEnable(enable)
@@ -1059,13 +949,14 @@ class StickyControllers:
 
     def manager_selected(self, manager_name):
         managers = get_sticky_managers(self.manager.transform)
-        possible_managers = [m for m in managers if m.name == manager_name]
+        possible_managers = [m for m in managers
+                            if m.name == manager_name]
         if possible_managers:
             self.update_gui(managers, possible_managers[0])
 
     def set_manager_orient_object(self, *args):
         obj = pc.PyNode(self.std_orient_tf.getText())
-        self.manager.set_orient_object(obj)
+        self.manager.set_orient_object(obj)        
         self.update_manager_orient_object_gui()
 
     def clear_manager_orient_object(self, *args):
@@ -1078,12 +969,14 @@ class StickyControllers:
         tf.textChangedCommand(lambda x: None)
         tf.setText(obj.name(long=False))
         tf.setEditable(False)
-
+    
     def clear_control_orient_object(self, control, tf):
         control.set_orient_object(None)
         tf.textChangedCommand(lambda x: None)
         tf.setText("")
-        tf.textChangedCommand(pc.Callback(self.set_control_orient_object, control, tf))
+        tf.textChangedCommand(pc.Callback(
+            self.set_control_orient_object, control, tf
+        ))
         tf.setEditable(True)
 
     def set_search_string(self, text):
@@ -1105,7 +998,8 @@ class StickyControllers:
         if new_name == name:
             new_name = f"{name}_sym"
         control.create_symmetry_control(
-            new_name, sym_matrix=control.manager.symmetry_matrix
+            new_name, 
+            sym_matrix=control.manager.symmetry_matrix
         )
         self.build_control_list()
 
@@ -1119,16 +1013,12 @@ class StickyControllers:
     def set_symmetry_direction(self, item):
         self.manager.grp.symmetry_direction.set(item)
 
-    def reweight(self, control: StickyControl):
+    def reweight(self, control:StickyControl):
         sel = pc.selected()
-        if not (
-            sel
-            and isinstance(sel[0], pc.general.MeshVertex)
-            and sel[0].node() == self.manager.transform.getShape()
-        ):
+        if not (sel and isinstance(sel[0], pc.general.MeshVertex) and sel[0].node() == self.manager.transform.getShape()):
             pc.confirmDialog(
                 title="Info",
-                message=f"Please soft select Verts of {self.manager.transform}",
+                message=f"Please soft select Verts of {self.manager.transform}"
             )
             pc.select(self.manager.transform)
             pc.selectType(v=True)
@@ -1146,3 +1036,4 @@ class StickyControllers:
     def kill_script_jobs(self, *args):
         for job in self.script_jobs:
             pc.scriptJob(kill=job, force=True)
+
